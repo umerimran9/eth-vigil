@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BatchRouteImport } from './routes/batch'
 import { Route as ConsensusRouteImport } from './routes/consensus'
 import { Route as DetectRouteImport } from './routes/detect'
+import { Route as ExplainRouteImport } from './routes/explain'
 import { Route as MonitorRouteImport } from './routes/monitor'
 import { Route as ModelsIndexRouteImport } from './routes/models.index'
 import { Route as ModelsModelIdRouteImport } from './routes/models.$modelId'
@@ -37,6 +38,11 @@ const DetectRoute = DetectRouteImport.update({
   path: '/detect',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExplainRoute = ExplainRouteImport.update({
+  id: '/explain',
+  path: '/explain',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MonitorRoute = MonitorRouteImport.update({
   id: '/monitor',
   path: '/monitor',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/batch': typeof BatchRoute
   '/consensus': typeof ConsensusRoute
   '/detect': typeof DetectRoute
+  '/explain': typeof ExplainRoute
   '/monitor': typeof MonitorRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/batch': typeof BatchRoute
   '/consensus': typeof ConsensusRoute
   '/detect': typeof DetectRoute
+  '/explain': typeof ExplainRoute
   '/monitor': typeof MonitorRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models': typeof ModelsIndexRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/batch': typeof BatchRoute
   '/consensus': typeof ConsensusRoute
   '/detect': typeof DetectRoute
+  '/explain': typeof ExplainRoute
   '/monitor': typeof MonitorRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/batch'
     | '/consensus'
     | '/detect'
+    | '/explain'
     | '/monitor'
     | '/models/$modelId'
     | '/models/'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/batch'
     | '/consensus'
     | '/detect'
+    | '/explain'
     | '/monitor'
     | '/models/$modelId'
     | '/models'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/batch'
     | '/consensus'
     | '/detect'
+    | '/explain'
     | '/monitor'
     | '/models/$modelId'
     | '/models/'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   BatchRoute: typeof BatchRoute
   ConsensusRoute: typeof ConsensusRoute
   DetectRoute: typeof DetectRoute
+  ExplainRoute: typeof ExplainRoute
   MonitorRoute: typeof MonitorRoute
   ModelsModelIdRoute: typeof ModelsModelIdRoute
   ModelsIndexRoute: typeof ModelsIndexRoute
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DetectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/explain': {
+      id: '/explain'
+      path: '/explain'
+      fullPath: '/explain'
+      preLoaderRoute: typeof ExplainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/monitor': {
       id: '/monitor'
       path: '/monitor'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   BatchRoute: BatchRoute,
   ConsensusRoute: ConsensusRoute,
   DetectRoute: DetectRoute,
+  ExplainRoute: ExplainRoute,
   MonitorRoute: MonitorRoute,
   ModelsModelIdRoute: ModelsModelIdRoute,
   ModelsIndexRoute: ModelsIndexRoute,
