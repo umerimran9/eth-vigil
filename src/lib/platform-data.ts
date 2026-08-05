@@ -267,16 +267,17 @@ export const makeTxn = (block: number): Txn => {
   };
 };
 
-export const HISTORY = Array.from({ length: 14 }, (_, i) => {
-  const risk = [88.4, 12.1, 64.9, 91.2, 7.4, 41.6, 22.8, 77.3, 5.9, 33.2, 96.1, 18.7, 52.4, 9.8][i];
-  return {
-    id: `AN-${4820 - i}`,
-    hash: randomHash(),
-    model: MODELS[i % MODELS.length].name,
-    risk,
-    level: levelFromRisk(risk),
-    confidence: Number((0.72 + Math.random() * 0.27).toFixed(3)),
-    mode: (["Hash", "Batch", "Manual", "Consensus"] as const)[i % 4],
-    at: new Date(Date.now() - i * 5400000).toISOString(),
-  };
-});
+const HISTORY_RISKS = [88.4, 12.1, 64.9, 91.2, 7.4, 41.6, 22.8, 77.3, 5.9, 33.2, 96.1, 18.7, 52.4, 9.8];
+const MODES = ["Hash", "Batch", "Manual", "Consensus"] as const;
+
+export const HISTORY = HISTORY_RISKS.map((risk, i) => ({
+  id: `AN-${4820 - i}`,
+  hash: randomHash(),
+  model: MODELS[i % MODELS.length]!.name,
+  risk,
+  level: levelFromRisk(risk),
+  confidence: Number((0.72 + Math.random() * 0.27).toFixed(3)),
+  mode: MODES[i % 4]!,
+  at: new Date(Date.now() - i * 5400000).toISOString(),
+}));
+
