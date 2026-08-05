@@ -19,13 +19,18 @@ export function Panel({
       initial={{ opacity: 0, y: 22, filter: "blur(6px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ delay, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={tilt ? { y: -5, rotateX: 1.4, rotateY: -1.4 } : undefined}
-      style={tilt ? { transformPerspective: 1200 } : undefined}
+      {...(tilt
+        ? {
+            whileHover: { y: -5, rotateX: 1.4, rotateY: -1.4 },
+            style: { transformPerspective: 1200 },
+          }
+        : {})}
       className={cn("rounded-3xl glass-panel p-6", className)}
     >
       {children}
     </motion.section>
   );
+
 }
 
 export function PageHeader({
