@@ -18,6 +18,7 @@ import { Route as ExplainRouteImport } from './routes/explain'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as MonitorRouteImport } from './routes/monitor'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ModelsIndexRouteImport } from './routes/models.index'
 import { Route as ModelsModelIdRouteImport } from './routes/models.$modelId'
 
@@ -66,6 +67,11 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ModelsIndexRoute = ModelsIndexRouteImport.update({
   id: '/models/',
   path: '/models/',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
 }
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models': typeof ModelsIndexRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
 }
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/monitor'
     | '/reports'
+    | '/settings'
     | '/models/$modelId'
     | '/models/'
   fileRoutesByTo: FileRoutesByTo
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/monitor'
     | '/reports'
+    | '/settings'
     | '/models/$modelId'
     | '/models'
   id:
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/monitor'
     | '/reports'
+    | '/settings'
     | '/models/$modelId'
     | '/models/'
   fileRoutesById: FileRoutesById
@@ -169,6 +181,7 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   MonitorRoute: typeof MonitorRoute
   ReportsRoute: typeof ReportsRoute
+  SettingsRoute: typeof SettingsRoute
   ModelsModelIdRoute: typeof ModelsModelIdRoute
   ModelsIndexRoute: typeof ModelsIndexRoute
 }
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/models/': {
       id: '/models/'
       path: '/models'
@@ -265,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   MonitorRoute: MonitorRoute,
   ReportsRoute: ReportsRoute,
+  SettingsRoute: SettingsRoute,
   ModelsModelIdRoute: ModelsModelIdRoute,
   ModelsIndexRoute: ModelsIndexRoute,
 }
