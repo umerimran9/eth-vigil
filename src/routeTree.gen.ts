@@ -14,6 +14,7 @@ import { Route as BatchRouteImport } from './routes/batch'
 import { Route as DetectRouteImport } from './routes/detect'
 import { Route as MonitorRouteImport } from './routes/monitor'
 import { Route as ModelsIndexRouteImport } from './routes/models.index'
+import { Route as ModelsModelIdRouteImport } from './routes/models.$modelId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,12 +41,18 @@ const ModelsIndexRoute = ModelsIndexRouteImport.update({
   path: '/models/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ModelsModelIdRoute = ModelsModelIdRouteImport.update({
+  id: '/models/$modelId',
+  path: '/models/$modelId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/batch': typeof BatchRoute
   '/detect': typeof DetectRoute
   '/monitor': typeof MonitorRoute
+  '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/batch': typeof BatchRoute
   '/detect': typeof DetectRoute
   '/monitor': typeof MonitorRoute
+  '/models/$modelId': typeof ModelsModelIdRoute
   '/models': typeof ModelsIndexRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,23 @@ export interface FileRoutesById {
   '/batch': typeof BatchRoute
   '/detect': typeof DetectRoute
   '/monitor': typeof MonitorRoute
+  '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/batch' | '/detect' | '/monitor' | '/models/'
+  fullPaths:
+    '/' | '/batch' | '/detect' | '/monitor' | '/models/$modelId' | '/models/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/batch' | '/detect' | '/monitor' | '/models'
-  id: '__root__' | '/' | '/batch' | '/detect' | '/monitor' | '/models/'
+  to: '/' | '/batch' | '/detect' | '/monitor' | '/models/$modelId' | '/models'
+  id:
+    | '__root__'
+    | '/'
+    | '/batch'
+    | '/detect'
+    | '/monitor'
+    | '/models/$modelId'
+    | '/models/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +93,7 @@ export interface RootRouteChildren {
   BatchRoute: typeof BatchRoute
   DetectRoute: typeof DetectRoute
   MonitorRoute: typeof MonitorRoute
+  ModelsModelIdRoute: typeof ModelsModelIdRoute
   ModelsIndexRoute: typeof ModelsIndexRoute
 }
 
@@ -116,6 +134,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModelsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/models/$modelId': {
+      id: '/models/$modelId'
+      path: '/models/$modelId'
+      fullPath: '/models/$modelId'
+      preLoaderRoute: typeof ModelsModelIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -124,6 +149,7 @@ const rootRouteChildren: RootRouteChildren = {
   BatchRoute: BatchRoute,
   DetectRoute: DetectRoute,
   MonitorRoute: MonitorRoute,
+  ModelsModelIdRoute: ModelsModelIdRoute,
   ModelsIndexRoute: ModelsIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -215,7 +215,7 @@ function ModelPage() {
         <Panel delay={0.4}>
           <h2 className="text-sm font-semibold text-safe">Advantages</h2>
           <ul className="mt-5 space-y-3">
-            {model.advantages.map((a) => (
+            {model.advantages.map((a: string) => (
               <li key={a} className="flex gap-3 text-xs leading-relaxed text-muted-foreground">
                 <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-safe" />
                 {a}
@@ -227,7 +227,7 @@ function ModelPage() {
         <Panel delay={0.45}>
           <h2 className="text-sm font-semibold text-risk">Limitations</h2>
           <ul className="mt-5 space-y-3">
-            {model.limitations.map((l) => (
+            {model.limitations.map((l: string) => (
               <li key={l} className="flex gap-3 text-xs leading-relaxed text-muted-foreground">
                 <Minus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-risk" />
                 {l}
