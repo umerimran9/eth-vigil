@@ -28,7 +28,7 @@ export const Route = createFileRoute("/detect")({
       },
     ],
   }),
-  component: Detect;
+  component: Detect,
 });
 
 const STAGES = [
