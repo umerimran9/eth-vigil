@@ -4,7 +4,7 @@ import { ArrowUpRight, Cpu } from "lucide-react";
 import { ModuleShell, PageHeader, Panel } from "@/components/ui-kit";
 import { MODELS } from "@/lib/platform-data";
 
-export const Route = createFileRoute("/models")({
+export const Route = createFileRoute("/models/")({
   head: () => ({
     meta: [
       { title: "AI Models — Aegis Ensemble" },
