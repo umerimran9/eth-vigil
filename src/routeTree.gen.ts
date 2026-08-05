@@ -17,6 +17,7 @@ import { Route as DetectRouteImport } from './routes/detect'
 import { Route as ExplainRouteImport } from './routes/explain'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as MonitorRouteImport } from './routes/monitor'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ModelsIndexRouteImport } from './routes/models.index'
 import { Route as ModelsModelIdRouteImport } from './routes/models.$modelId'
 
@@ -60,6 +61,11 @@ const MonitorRoute = MonitorRouteImport.update({
   path: '/monitor',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ModelsIndexRoute = ModelsIndexRouteImport.update({
   id: '/models/',
   path: '/models/',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/explain': typeof ExplainRoute
   '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
+  '/reports': typeof ReportsRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/explain': typeof ExplainRoute
   '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
+  '/reports': typeof ReportsRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models': typeof ModelsIndexRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/explain': typeof ExplainRoute
   '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
+  '/reports': typeof ReportsRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/explain'
     | '/history'
     | '/monitor'
+    | '/reports'
     | '/models/$modelId'
     | '/models/'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/explain'
     | '/history'
     | '/monitor'
+    | '/reports'
     | '/models/$modelId'
     | '/models'
   id:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/explain'
     | '/history'
     | '/monitor'
+    | '/reports'
     | '/models/$modelId'
     | '/models/'
   fileRoutesById: FileRoutesById
@@ -156,6 +168,7 @@ export interface RootRouteChildren {
   ExplainRoute: typeof ExplainRoute
   HistoryRoute: typeof HistoryRoute
   MonitorRoute: typeof MonitorRoute
+  ReportsRoute: typeof ReportsRoute
   ModelsModelIdRoute: typeof ModelsModelIdRoute
   ModelsIndexRoute: typeof ModelsIndexRoute
 }
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MonitorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/models/': {
       id: '/models/'
       path: '/models'
@@ -244,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExplainRoute: ExplainRoute,
   HistoryRoute: HistoryRoute,
   MonitorRoute: MonitorRoute,
+  ReportsRoute: ReportsRoute,
   ModelsModelIdRoute: ModelsModelIdRoute,
   ModelsIndexRoute: ModelsIndexRoute,
 }
