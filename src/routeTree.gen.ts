@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BatchRouteImport } from './routes/batch'
 import { Route as DetectRouteImport } from './routes/detect'
 import { Route as MonitorRouteImport } from './routes/monitor'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BatchRoute = BatchRouteImport.update({
+  id: '/batch',
+  path: '/batch',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetectRoute = DetectRouteImport.update({
@@ -31,30 +37,34 @@ const MonitorRoute = MonitorRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/batch': typeof BatchRoute
   '/detect': typeof DetectRoute
   '/monitor': typeof MonitorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/batch': typeof BatchRoute
   '/detect': typeof DetectRoute
   '/monitor': typeof MonitorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/batch': typeof BatchRoute
   '/detect': typeof DetectRoute
   '/monitor': typeof MonitorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/detect' | '/monitor'
+  fullPaths: '/' | '/batch' | '/detect' | '/monitor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/detect' | '/monitor'
-  id: '__root__' | '/' | '/detect' | '/monitor'
+  to: '/' | '/batch' | '/detect' | '/monitor'
+  id: '__root__' | '/' | '/batch' | '/detect' | '/monitor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BatchRoute: typeof BatchRoute
   DetectRoute: typeof DetectRoute
   MonitorRoute: typeof MonitorRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/batch': {
+      id: '/batch'
+      path: '/batch'
+      fullPath: '/batch'
+      preLoaderRoute: typeof BatchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/detect': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BatchRoute: BatchRoute,
   DetectRoute: DetectRoute,
   MonitorRoute: MonitorRoute,
 }
