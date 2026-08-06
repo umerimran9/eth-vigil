@@ -99,7 +99,7 @@ function Landing() {
           >
             <Link
               to="/monitor"
-              className="group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition hover:scale-[1.03] hover:shadow-[0_18px_50px_-16px_var(--cyan-accent)]"
+              className="group inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:scale-[1.03] hover:shadow-[0_18px_50px_-16px_var(--signal-green)]"
             >
               Enter the command center
               <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
