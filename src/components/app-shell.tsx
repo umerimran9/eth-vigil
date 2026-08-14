@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/command";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { apiFetch, WS_BASE_URL } from "@/lib/api";
+import { classifyQuery, useNetworkState } from "@/lib/network-state";
+import { EntityBadge, HexChip, type EntityKind } from "@/components/web3";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -126,6 +128,37 @@ function ThemeToggle() {
   );
 }
 
+function SidebarNetwork() {
+  const net = useNetworkState();
+  return (
+    <div className="rounded-md border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-foreground">
+          {net.chain}
+        </span>
+        <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-safe">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" />
+          live
+        </span>
+      </div>
+      <dl className="divide-y divide-border font-mono text-[10px]">
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <dt className="text-muted-foreground">block</dt>
+          <dd className="tabular-nums text-foreground">{net.blockLabel}</dd>
+        </div>
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <dt className="text-muted-foreground">base fee</dt>
+          <dd className="tabular-nums text-foreground">{net.baseFeeGwei.toFixed(1)} gwei</dd>
+        </div>
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <dt className="text-muted-foreground">detection</dt>
+          <dd className="text-safe">7 models online</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
@@ -188,16 +221,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </div>
 
-      {/* Network Connectivity Footer */}
-      <div className="rounded-xl border border-border bg-card p-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-medium text-foreground">Ethereum Mainnet</span>
-          <span className="h-2 w-2 rounded-full bg-safe animate-pulse" />
-        </div>
-        <div className="mt-1 font-mono text-[10px] text-muted-foreground">
-          Block #19,485,021 · 7 Models Active
-        </div>
-      </div>
+      {/* Live network context -- the chain the whole product is bound to */}
+      <SidebarNetwork />
     </nav>
   );
 }
