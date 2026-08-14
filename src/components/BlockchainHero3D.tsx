@@ -126,6 +126,7 @@ export function BlockchainHero3D() {
         for (let j = i + 1; j < projected.length; j++) {
           const a = projected[i];
           const b = projected[j];
+          if (!a || !b) continue;
           const dist = Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
           if (dist < 150) {

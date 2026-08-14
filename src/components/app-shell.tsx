@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/command";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { apiFetch, WS_BASE_URL } from "@/lib/api";
+import { classifyQuery, useNetworkState } from "@/lib/network-state";
+import { EntityBadge, HexChip, type EntityKind } from "@/components/web3";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -50,18 +52,18 @@ interface RecentCase {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Platform",
+    label: "Network",
     items: [
-      { to: "/", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/", label: "Network Overview", icon: LayoutDashboard },
       { to: "/monitor", label: "Live Stream", icon: Activity, badge: "Live" },
     ],
   },
   {
-    label: "Detection",
+    label: "Investigate",
     items: [
-      { to: "/detect", label: "Investigate", icon: Radar },
+      { to: "/detect", label: "Transaction", icon: Radar },
       { to: "/batch", label: "Batch Scanner", icon: Layers },
-      { to: "/cases", label: "Case History", icon: FolderSearch },
+      { to: "/cases", label: "Cases", icon: FolderSearch },
     ],
   },
   {
@@ -73,9 +75,9 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Configuration",
+    label: "System",
     items: [
-      { to: "/system", label: "System Health", icon: Gauge },
+      { to: "/system", label: "Health", icon: Gauge },
       { to: "/settings", label: "Settings", icon: Settings },
     ],
   },
@@ -123,6 +125,37 @@ function ThemeToggle() {
     >
       <Icon className="h-4 w-4" />
     </button>
+  );
+}
+
+function SidebarNetwork() {
+  const net = useNetworkState();
+  return (
+    <div className="rounded-md border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-foreground">
+          {net.chain}
+        </span>
+        <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-safe">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" />
+          live
+        </span>
+      </div>
+      <dl className="divide-y divide-border font-mono text-[10px]">
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <dt className="text-muted-foreground">block</dt>
+          <dd className="tabular-nums text-foreground">{net.blockLabel}</dd>
+        </div>
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <dt className="text-muted-foreground">base fee</dt>
+          <dd className="tabular-nums text-foreground">{net.baseFeeGwei.toFixed(1)} gwei</dd>
+        </div>
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <dt className="text-muted-foreground">detection</dt>
+          <dd className="text-safe">7 models online</dd>
+        </div>
+      </dl>
+    </div>
   );
 }
 
@@ -188,16 +221,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </div>
 
-      {/* Network Connectivity Footer */}
-      <div className="rounded-xl border border-border bg-card p-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-medium text-foreground">Ethereum Mainnet</span>
-          <span className="h-2 w-2 rounded-full bg-safe animate-pulse" />
-        </div>
-        <div className="mt-1 font-mono text-[10px] text-muted-foreground">
-          Block #19,485,021 · 7 Models Active
-        </div>
-      </div>
+      {/* Live network context -- the chain the whole product is bound to */}
+      <SidebarNetwork />
     </nav>
   );
 }
@@ -207,6 +232,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [recent, setRecent] = useState<RecentCase[]>([]);
   const [liveConnected, setLiveConnected] = useState(false);
+  const [query, setQuery] = useState("");
+  const net = useNetworkState();
+  const queryKind = classifyQuery(query);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -276,10 +304,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             <button
               onClick={() => setCmdOpen(true)}
-              className="flex h-8 items-center gap-2 rounded-lg border border-border bg-card px-3 text-xs text-muted-foreground transition hover:border-primary/40 hover:bg-secondary sm:w-60"
+              className="flex h-8 min-w-0 items-center gap-2 rounded-md border border-border bg-card px-3 text-xs text-muted-foreground transition hover:border-primary/40 hover:bg-secondary sm:w-[22rem]"
             >
               <Search className="h-3.5 w-3.5" />
-              <span className="flex-1 text-left">Search transactions…</span>
+              <span className="flex-1 truncate text-left">
+                Search transaction, wallet, block, contract, entity…
+              </span>
               <kbd className="hidden rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[9px] sm:inline">
                 ⌘K
               </kbd>
@@ -287,10 +317,23 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <div className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3 py-1 text-xs sm:flex">
-              <span className={cn("h-2 w-2 rounded-full", liveConnected ? "bg-safe" : "bg-warn")} />
-              <span className="font-mono text-[11px] text-muted-foreground">
-                Mainnet <span className="font-medium text-foreground">#19,485,021</span>
+            <div className="hidden items-stretch divide-x divide-border overflow-hidden rounded-md border border-border bg-card font-mono text-[10px] md:flex">
+              <span className="flex items-center gap-1.5 px-2.5 py-1">
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    liveConnected ? "animate-pulse bg-safe" : "bg-warn",
+                  )}
+                />
+                <span className="uppercase tracking-wider text-muted-foreground">
+                  {liveConnected ? "Mainnet · live" : "Mainnet · cached"}
+                </span>
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 tabular-nums text-foreground">
+                {net.blockLabel}
+              </span>
+              <span className="hidden items-center gap-1.5 px-2.5 py-1 tabular-nums text-muted-foreground lg:flex">
+                {net.baseFeeGwei.toFixed(1)} gwei
               </span>
             </div>
 
@@ -299,7 +342,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="hidden items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition hover:opacity-90 sm:inline-flex"
             >
               <Radar className="h-3.5 w-3.5" />
-              <span>Investigate</span>
+              <span>New investigation</span>
             </Link>
 
             <ThemeToggle />
@@ -311,11 +354,33 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Command Search Palette */}
       <CommandDialog open={cmdOpen} onOpenChange={setCmdOpen}>
-        <CommandInput placeholder="Search transactions, wallets, or features…" />
+        <CommandInput
+          value={query}
+          onValueChange={setQuery}
+          placeholder="Search transaction, wallet, block, contract, entity…"
+        />
         <CommandList>
-          <CommandEmpty>No matching results.</CommandEmpty>
+          <CommandEmpty>No matching on-chain object or workspace.</CommandEmpty>
+          {queryKind !== "unknown" ? (
+            <CommandGroup heading="On-chain">
+              <CommandItem value={`onchain-${query}`} asChild>
+                <Link
+                  to="/detect"
+                  search={{ hash: query.trim(), aegisRun: queryKind === "transaction" }}
+                  onClick={() => setCmdOpen(false)}
+                  className="flex items-center gap-2"
+                >
+                  <EntityBadge kind={queryKind as EntityKind} />
+                  <HexChip value={query.trim()} lead={10} tail={8} />
+                  <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {queryKind === "block" ? "Inspect block" : "Run detection"}
+                  </span>
+                </Link>
+              </CommandItem>
+            </CommandGroup>
+          ) : null}
           {recent.length > 0 ? (
-            <CommandGroup heading="Recent Investigations">
+            <CommandGroup heading="Recent investigations">
               {recent.map((r) => (
                 <CommandItem key={r.id} value={`${r.id} ${r.hash}`} asChild>
                   <Link to="/cases" onClick={() => setCmdOpen(false)}>

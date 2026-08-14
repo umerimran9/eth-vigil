@@ -81,6 +81,8 @@ interface HistoryRecord {
   }>;
   explainability?: {
     primary_risk_driver: string;
+    narrative_paragraph?: string;
+    narrative_summary?: string;
     feature_signals: Array<{
       feature: string;
       label?: string;
@@ -460,7 +462,7 @@ function Reports() {
               <Panel>
                 <EmptyState
                   title="Select a transaction"
-                  description="Choose a record from the history list to preview and export its forensic certificate."
+                  body="Choose a record from the history list to preview and export its forensic certificate."
                 />
               </Panel>
             )}
