@@ -81,6 +81,8 @@ interface HistoryRecord {
   }>;
   explainability?: {
     primary_risk_driver: string;
+    narrative_paragraph?: string;
+    narrative_summary?: string;
     feature_signals: Array<{
       feature: string;
       label?: string;
