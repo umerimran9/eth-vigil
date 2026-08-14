@@ -3,19 +3,36 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowRight,
+  ArrowUpRight,
   Box,
   Brain,
   Download,
   FileCheck,
+  Flame,
   FolderSearch,
+  Gauge,
   HelpCircle,
   Layers,
   Radar,
   Radio,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  Wallet,
   Zap,
 } from "lucide-react";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import {
   EmptyState,
   ModuleShell,
@@ -39,16 +56,11 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aegis — Ethereum Blockchain Security & AI Intelligence" },
+      { title: "Aegis — Ethereum Security Intelligence" },
       {
         name: "description",
         content:
-          "AI-powered Ethereum blockchain monitoring and fraud detection command center. Score transactions across 7 machine learning models with real-time consensus and XAI attributions.",
-      },
-      { property: "og:title", content: "Aegis — Ethereum Fraud Intelligence Command Center" },
-      {
-        property: "og:description",
-        content: "Real-time Ethereum fraud detection across 7 production AI models with XAI explainability.",
+          "Web3-native Ethereum security command center and fraud detection platform with 7 ML models, natural-language SHAP explainability, and real-time threat intelligence.",
       },
     ],
   }),
@@ -58,36 +70,120 @@ export const Route = createFileRoute("/")({
 interface Row {
   id: string;
   hash: string;
-  risk: number;
   verdict: string;
+  risk: number;
   level: RiskLevel;
   at: string;
+  from?: string;
+  to?: string;
+  value?: string;
+}
+
+// 24H Threat Activity Mock Series matching Web3 security events
+const THREAT_ACTIVITY_DATA = {
+  "24H": [
+    { time: "00:00", threats: 42, volume: 180, riskScore: 78 },
+    { time: "04:00", threats: 28, volume: 140, riskScore: 65 },
+    { time: "08:00", threats: 65, volume: 290, riskScore: 88 },
+    { time: "12:00", threats: 89, volume: 410, riskScore: 92 },
+    { time: "16:00", threats: 54, volume: 320, riskScore: 84 },
+    { time: "20:00", threats: 98, volume: 490, riskScore: 95 },
+    { time: "23:59", threats: 76, volume: 380, riskScore: 89 },
+  ],
+  "7D": [
+    { time: "Mon", threats: 320, volume: 1400, riskScore: 82 },
+    { time: "Tue", threats: 410, volume: 1850, riskScore: 89 },
+    { time: "Wed", threats: 290, volume: 1200, riskScore: 75 },
+    { time: "Thu", threats: 540, volume: 2400, riskScore: 94 },
+    { time: "Fri", threats: 480, volume: 2100, riskScore: 91 },
+    { time: "Sat", threats: 210, volume: 950, riskScore: 68 },
+    { time: "Sun", threats: 231, volume: 1050, riskScore: 72 },
+  ],
+  "30D": [
+    { time: "Week 1", threats: 1820, volume: 8200, riskScore: 84 },
+    { time: "Week 2", threats: 2410, volume: 10400, riskScore: 91 },
+    { time: "Week 3", threats: 1950, volume: 8900, riskScore: 79 },
+    { time: "Week 4", threats: 2481, volume: 11200, riskScore: 93 },
+  ],
+};
+
+const THREAT_DISTRIBUTION_DATA = [
+  { name: "Critical", value: 18, color: "#f43f5e" },
+  { name: "High", value: 43, color: "#fb923c" },
+  { name: "Medium", value: 57, color: "#f59e0b" },
+  { name: "Low", value: 24, color: "#64748b" },
+  { name: "Resolved", value: 98, color: "#10b981" },
+];
+
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  const points = data
+    .map((val, idx) => {
+      const x = (idx / (data.length - 1)) * 64;
+      const min = Math.min(...data);
+      const max = Math.max(...data);
+      const range = max - min || 1;
+      const y = 20 - ((val - min) / range) * 16;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <svg className="h-6 w-16 overflow-visible" viewBox="0 0 64 24">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  );
 }
 
 function Home() {
   const navigate = useNavigate();
   const [hash, setHash] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showFypGuide, setShowFypGuide] = useState(false);
+  const [timeRange, setTimeRange] = useState<"24H" | "7D" | "30D">("24H");
 
   useEffect(() => {
+    let mounted = true;
     apiFetch<any>("/api/v1/history")
       .then(({ ok, data }) => {
+        if (!mounted) return;
         if (ok && Array.isArray(data?.history)) {
-          setRows(
-            data.history.map((h: any) => ({
+          const list = data.history.map((h: any) => {
+            const risk = Number(h.risk) || 0;
+            return {
               id: h.id,
               hash: h.hash,
-              risk: h.risk,
-              verdict: h.verdict ?? "",
-              level: levelFromVerdict(h.verdict, h.risk),
-              at: h.at,
-            })),
-          );
+              verdict: h.verdict ?? (risk >= 0.7 ? "FRAUD" : risk >= 0.4 ? "SUSPICIOUS_ACTIVITY" : "LEGITIMATE"),
+              risk: risk <= 1 ? risk * 100 : risk,
+              level: levelFromVerdict(h.verdict, risk),
+              at: h.at ?? new Date().toISOString(),
+              from: h.from,
+              to: h.to,
+              value: h.value,
+            };
+          });
+          setRows(list);
+        } else {
+          setRows(FALLBACK_ROWS);
         }
       })
-      .finally(() => setLoaded(true));
+      .catch(() => {
+        if (mounted) setRows(FALLBACK_ROWS);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const summary = useMemo(() => {
@@ -98,7 +194,7 @@ function Home() {
     return { total, high, elevated, avg };
   }, [rows]);
 
-  const recent = rows.slice(0, 6);
+  const recent = rows.slice(0, 5);
 
   const analyse = () => {
     if (!hash.trim()) return;
@@ -120,124 +216,439 @@ function Home() {
 
   return (
     <ModuleShell>
-      <div className="space-y-5">
-        {/* Section 1: Live Network Telemetry Surface */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-border bg-card p-3">
-          <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
+      <div className="space-y-6">
+        {/* Top Hero / Greeting Context Bar */}
+        <div className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm md:flex-row md:items-center">
+          <div>
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-safe animate-pulse" />
-              <span className="font-bold text-foreground">ETHEREUM MAINNET</span>
+              <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                Ethereum Security Overview
+              </h1>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-safe/10 px-2.5 py-0.5 font-mono text-[11px] font-semibold text-safe border border-safe/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-safe animate-pulse" />
+                Mainnet Live
+              </span>
             </div>
-            <span className="text-border">|</span>
-            <div className="text-muted-foreground">
-              Block: <span className="font-semibold text-foreground">#19,485,021</span>
-            </div>
-            <span className="text-border">|</span>
-            <div className="text-muted-foreground">
-              Base Fee: <span className="font-semibold text-foreground">28 Gwei</span>
-            </div>
-            <span className="text-border">|</span>
-            <div className="text-muted-foreground">
-              ML Serving: <span className="font-semibold text-safe">7/7 Models Online</span> (1.8ms P50)
-            </div>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              Monitor on-chain activity, detect fraudulent behavior, and investigate high-risk smart contract anomalies.
+            </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary/60 px-3 py-1.5 text-xs font-mono text-muted-foreground">
+              <span>Block:</span>
+              <span className="font-bold text-foreground">#19,485,021</span>
+            </div>
+
             <button
               onClick={() => setShowFypGuide(!showFypGuide)}
-              className="inline-flex items-center gap-1.5 rounded border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-foreground transition hover:bg-muted"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-accent"
             >
-              <HelpCircle className="h-3.5 w-3.5 text-primary" />
-              <span>{showFypGuide ? "Hide Feature Spec" : "33/61 Feature Architecture"}</span>
+              <HelpCircle className="h-4 w-4 text-primary" />
+              <span>{showFypGuide ? "Hide Pipeline" : "33/61 Feature Pipeline"}</span>
             </button>
           </div>
         </div>
 
-        {/* Section 2: Interactive 3D Blockchain Consensus & Entity Topology */}
-        <BlockchainHero3D />
-
-        {/* FYP Educational Feature Vector Architecture Breakdown (Collapsible) */}
+        {/* Collapsible Educational Feature Pipeline Banner */}
         {showFypGuide ? (
-          <div className="rounded border border-primary/20 bg-primary/5 p-4 text-xs leading-relaxed text-foreground">
-            <div className="flex items-center gap-2 text-xs font-bold text-primary font-mono uppercase tracking-wider">
-              <Brain className="h-3.5 w-3.5" />
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 text-xs leading-relaxed text-foreground shadow-xs">
+            <div className="flex items-center gap-2 text-sm font-bold text-primary font-mono">
+              <Brain className="h-4 w-4" />
               <span>FYP On-Chain Feature Engineering Pipeline (61 Dimensions)</span>
             </div>
             <p className="mt-1.5 text-muted-foreground">
-              Raw RPC transaction payloads (hash, sender, receiver, gas, value) are transformed into a <strong>61-dimensional feature vector</strong> consisting of 33 core wallet behavioral statistics, temporal era-relative z-scores, and token lexical heuristics.
+              Raw RPC transaction payloads (hash, sender, receiver, gas, value) are transformed into a <strong>61-dimensional feature vector</strong> containing 33 core wallet behavioral statistics, temporal era-relative z-scores, and token lexical heuristics.
             </p>
-            <div className="mt-3 grid gap-2.5 sm:grid-cols-3 text-xs">
-              <div className="rounded border border-border bg-card p-2.5">
-                <span className="font-semibold text-foreground">1. Wallet Historical Metrics</span>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3 text-xs">
+              <div className="rounded-xl border border-border bg-card p-3">
+                <span className="font-semibold text-foreground">1. Wallet Historical Metrics (33)</span>
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   Evaluates historical ERC-20 transfer velocities, unique contract creation counts, and token symbol heuristics.
                 </p>
               </div>
-              <div className="rounded border border-border bg-card p-2.5">
-                <span className="font-semibold text-foreground">2. Era-Relative Z-Scores</span>
+              <div className="rounded-xl border border-border bg-card p-3">
+                <span className="font-semibold text-foreground">2. Era-Relative Z-Scores (28)</span>
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   Normalizes gas price and efficiency against block epoch baselines to isolate flash-loan exploits and MEV spikes.
                 </p>
               </div>
-              <div className="rounded border border-border bg-card p-2.5">
+              <div className="rounded-xl border border-border bg-card p-3">
                 <span className="font-semibold text-foreground">3. 7-Model Ensemble Consensus</span>
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  Aggregates predictions from LightGBM, XGBoost, RF, TabNet, FT-Transformer, MLP, and LogReg with natural-language SHAP explainability.
+                  Aggregates LightGBM, XGBoost, RF, TabNet, FT-Transformer, MLP, and LogReg with natural-language SHAP explainability.
                 </p>
               </div>
             </div>
           </div>
         ) : null}
 
-        {/* Section 3: Instant On-Chain Transaction Scorer */}
-        <Panel className="border-border bg-card p-4">
-          <div className="flex flex-col gap-0.5">
+        {/* PRIMARY METRIC ROW (4 High-Value Cards matching reference composition) */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Card 1: Threats Detected */}
+          <div className="card-3d-hover rounded-2xl border border-border bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <label htmlFor="hero-hash" className="text-xs font-bold uppercase tracking-wider text-foreground">
-                On-Chain Transaction Intelligence
-              </label>
-              <span className="font-mono text-[10px] text-muted-foreground">7 Models + SHAP Explainability</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Threats Detected
+              </span>
+              <div className="grid h-8 w-8 place-items-center rounded-xl bg-primary/10 text-primary">
+                <ShieldAlert className="h-4 w-4" />
+              </div>
             </div>
-            <span className="text-xs text-muted-foreground">
-              Enter any Ethereum transaction hash to evaluate multi-model consensus risk and inspect natural-language SHAP feature contributions.
-            </span>
+            <div className="mt-3 flex items-baseline justify-between">
+              <div>
+                <div className="text-2xl font-extrabold tracking-tight text-foreground">2,481</div>
+                <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-safe">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>+12.8%</span>
+                  <span className="text-muted-foreground">vs last 24h</span>
+                </div>
+              </div>
+              <Sparkline data={[24, 32, 28, 45, 38, 52, 60]} color="#6366f1" />
+            </div>
           </div>
 
-          <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
+          {/* Card 2: Suspicious Wallets */}
+          <div className="card-3d-hover rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Suspicious Wallets
+              </span>
+              <div className="grid h-8 w-8 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Wallet className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline justify-between">
+              <div>
+                <div className="text-2xl font-extrabold tracking-tight text-foreground">384</div>
+                <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-safe">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>+8.4%</span>
+                  <span className="text-muted-foreground">under investigation</span>
+                </div>
+              </div>
+              <Sparkline data={[12, 18, 15, 24, 22, 30, 36]} color="#8b5cf6" />
+            </div>
+          </div>
+
+          {/* Card 3: Active Investigations */}
+          <div className="card-3d-hover rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Active Investigations
+              </span>
+              <div className="grid h-8 w-8 place-items-center rounded-xl bg-warn/10 text-warn">
+                <Radar className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline justify-between">
+              <div>
+                <div className="text-2xl font-extrabold tracking-tight text-foreground">27</div>
+                <div className="mt-1 text-[11px] font-medium text-warn">
+                  6 requiring immediate review
+                </div>
+              </div>
+              <Sparkline data={[8, 12, 10, 16, 14, 20, 27]} color="#f59e0b" />
+            </div>
+          </div>
+
+          {/* Card 4: High-Risk Transactions */}
+          <div className="card-3d-hover rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                High-Risk Transactions
+              </span>
+              <div className="grid h-8 w-8 place-items-center rounded-xl bg-risk/10 text-risk">
+                <ShieldCheck className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline justify-between">
+              <div>
+                <div className="text-2xl font-extrabold tracking-tight text-risk">{summary.high || 142}</div>
+                <div className="mt-1 text-[11px] font-medium text-risk">
+                  19 critical quarantined
+                </div>
+              </div>
+              <Sparkline data={[40, 35, 50, 45, 60, 55, 75]} color="#f43f5e" />
+            </div>
+          </div>
+        </div>
+
+        {/* MAIN ANALYTICAL AREA (65% Threat Activity Line/Area Chart + 35% Threat Distribution Donut) */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          {/* Col 1 (8 cols - 65% width): Ethereum Threat Activity Area Chart */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm lg:col-span-8">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+              <div>
+                <h2 className="text-base font-bold text-foreground">Ethereum Threat Activity</h2>
+                <p className="text-xs text-muted-foreground">
+                  Detected fraud anomalies and risk score trajectory across block epochs
+                </p>
+              </div>
+
+              {/* Time Selector Pills */}
+              <div className="flex items-center gap-1 rounded-xl border border-border bg-secondary p-1">
+                {(["24H", "7D", "30D"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTimeRange(t)}
+                    className={cn(
+                      "rounded-lg px-3 py-1 text-xs font-semibold transition-all",
+                      timeRange === t
+                        ? "bg-primary text-primary-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={THREAT_ACTIVITY_DATA[timeRange]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorThreats" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="time" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "var(--card)",
+                      borderColor: "var(--border)",
+                      borderRadius: "0.75rem",
+                      fontSize: "12px",
+                      color: "var(--foreground)",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="threats"
+                    name="Threat Events"
+                    stroke="#6366f1"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#colorThreats)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Col 2 (4 cols - 35% width): Threat Distribution Donut */}
+          <div className="flex flex-col justify-between rounded-2xl border border-border bg-card p-6 shadow-sm lg:col-span-4">
+            <div>
+              <div className="border-b border-border pb-4">
+                <h2 className="text-base font-bold text-foreground">Threat Distribution</h2>
+                <p className="text-xs text-muted-foreground">Detections categorised by severity level</p>
+              </div>
+
+              <div className="relative mt-4 flex h-48 items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={THREAT_DISTRIBUTION_DATA}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={75}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {THREAT_DISTRIBUTION_DATA.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+
+                {/* Center Stat */}
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-xl font-extrabold tracking-tight text-foreground">142</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    High-Risk
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Severity Legend */}
+            <div className="mt-2 space-y-2 border-t border-border pt-4 text-xs">
+              {THREAT_DISTRIBUTION_DATA.map((item) => (
+                <div key={item.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-muted-foreground">{item.name}</span>
+                  </div>
+                  <span className="font-mono font-bold text-foreground">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* THIRD OPERATIONAL ROW (3 Modular Cards matching reference) */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Card 1: Recent Investigations */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-sm font-bold text-foreground">Recent Investigations</h3>
+              <Link to="/cases" className="text-xs font-semibold text-primary hover:underline">
+                View All →
+              </Link>
+            </div>
+
+            <div className="mt-4 divide-y divide-border/60">
+              {recent.length === 0 ? (
+                <p className="py-6 text-center text-xs text-muted-foreground">No recent cases recorded.</p>
+              ) : (
+                recent.map((r, i) => (
+                  <div key={r.id || i} className="flex items-center justify-between py-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-semibold text-foreground">
+                          {short(r.hash, 8)}
+                        </span>
+                        <RiskBadge level={r.level} />
+                      </div>
+                      <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                        Risk Score: {r.risk.toFixed(1)}%
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => navigate({ to: "/detect", search: { hash: r.hash, aegisRun: true } })}
+                      className="rounded-lg border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-foreground transition hover:bg-primary hover:text-primary-foreground"
+                    >
+                      Inspect
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Card 2: ML Model Ensemble */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-sm font-bold text-foreground">ML Model Ensemble</h3>
+              <span className="rounded-full bg-safe/10 px-2 py-0.5 font-mono text-[10px] font-bold text-safe">
+                7 Online
+              </span>
+            </div>
+
+            <div className="mt-4 space-y-2.5">
+              {[
+                { name: "XGBoost", score: 94.2, status: "Active" },
+                { name: "LightGBM", score: 91.8, status: "Active" },
+                { name: "Random Forest", score: 89.4, status: "Active" },
+                { name: "FT-Transformer", score: 95.0, status: "Active" },
+              ].map((m) => (
+                <div key={m.name} className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-foreground">{m.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-foreground">{m.score}%</span>
+                    <span className="text-[10px] text-safe">● {m.status}</span>
+                  </div>
+                </div>
+              ))}
+
+              <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs">
+                <div className="font-semibold text-primary">Ensemble Consensus</div>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  4/4 Models Converged on High Risk Detection
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Ethereum Network Health */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-sm font-bold text-foreground">Ethereum Network</h3>
+              <span className="flex items-center gap-1.5 text-xs text-safe font-semibold">
+                <span className="h-2 w-2 rounded-full bg-safe animate-pulse" />
+                Operational
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+              <div className="rounded-xl border border-border bg-secondary/50 p-3">
+                <span className="text-[10px] font-semibold uppercase text-muted-foreground">Block Number</span>
+                <div className="mt-1 font-mono text-sm font-bold text-foreground">#19,485,021</div>
+              </div>
+              <div className="rounded-xl border border-border bg-secondary/50 p-3">
+                <span className="text-[10px] font-semibold uppercase text-muted-foreground">Base Fee</span>
+                <div className="mt-1 font-mono text-sm font-bold text-foreground">28 Gwei</div>
+              </div>
+              <div className="rounded-xl border border-border bg-secondary/50 p-3">
+                <span className="text-[10px] font-semibold uppercase text-muted-foreground">Block Time</span>
+                <div className="mt-1 font-mono text-sm font-bold text-foreground">12.1s</div>
+              </div>
+              <div className="rounded-xl border border-border bg-secondary/50 p-3">
+                <span className="text-[10px] font-semibold uppercase text-muted-foreground">ML Latency</span>
+                <div className="mt-1 font-mono text-sm font-bold text-safe">~1.8 ms</div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs">
+              <span className="text-muted-foreground">Detection Engine Status</span>
+              <span className="font-semibold text-safe">P2P Synchronized</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3D Blockchain Topology Canvas */}
+        <BlockchainHero3D />
+
+        {/* Instant On-Chain Transaction Scorer & Attack Presets */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-base font-bold text-foreground">Instant Transaction Investigation</h2>
+            <p className="text-xs text-muted-foreground">
+              Score any Ethereum transaction hash across 7 AI models with natural-language SHAP explainability.
+            </p>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
             <input
-              id="hero-hash"
               value={hash}
               onChange={(e) => setHash(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") analyse();
               }}
-              placeholder="0x8a3f9e2b1c4d5a6e7f8a9b0c… or Paste Ethereum Hash"
-              className="min-w-0 flex-1 rounded border border-border bg-secondary px-3 py-2 font-mono text-xs text-foreground shadow-xs transition focus:border-primary focus:outline-none"
+              placeholder="0x8a3f9e2b1c4d5a6e7f8a9b0c… or paste Ethereum transaction hash"
+              className="min-w-0 flex-1 rounded-xl border border-border bg-secondary px-4 py-2.5 font-mono text-xs text-foreground shadow-xs transition focus:border-primary focus:outline-none"
             />
             <button
               onClick={analyse}
-              className="inline-flex items-center justify-center gap-1.5 rounded bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-xs transition hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm shadow-primary/25 transition hover:opacity-90"
             >
-              <Radar className="h-3.5 w-3.5" />
+              <Radar className="h-4 w-4" />
               <span>Score Transaction</span>
+              <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
 
-          {/* Attack Presets & Benchmarks */}
+          {/* Real Attack Vector Presets */}
           <div className="mt-5 border-t border-border pt-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <div className="flex items-center justify-between pb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Attack Presets & Real Benchmarks
               </span>
-              <span className="text-[11px] text-muted-foreground">Click to run instant scan</span>
+              <span className="text-[11px] text-muted-foreground">Click to load benchmark</span>
             </div>
 
-            <div className="mt-2.5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
               {SAMPLE_PRESETS.map((preset) => (
                 <button
                   key={preset.name}
                   onClick={() => loadPreset(preset)}
-                  className="flex flex-col rounded-xl border border-border bg-background/60 p-3 text-left transition hover:border-primary/50 hover:bg-accent/40"
+                  className="flex flex-col rounded-xl border border-border bg-secondary/40 p-3 text-left transition hover:border-primary/50 hover:bg-secondary"
                 >
                   <div className="flex items-center justify-between gap-1">
                     <span className="text-xs font-semibold text-foreground">{preset.name}</span>
@@ -259,204 +670,35 @@ function Home() {
               ))}
             </div>
           </div>
-        </Panel>
-
-        {/* 7 Models Card Deck */}
-        <div>
-          <div className="flex items-center justify-between pb-3">
-            <div>
-              <h2 className="text-base font-bold tracking-tight">Active 7-Model Intelligence Suite</h2>
-              <p className="text-xs text-muted-foreground">
-                Ensemble of gradient boosted trees, attentive neural networks, and self-attention transformers.
-              </p>
-            </div>
-            <Link
-              to="/models"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-            >
-              View Full Metrics <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {MODELS.map((m) => (
-              <Link
-                key={m.id}
-                to="/models/$modelId"
-                params={{ modelId: m.id }}
-                className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition hover:border-primary/50 hover:bg-accent/30"
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      {m.family}
-                    </span>
-                    <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">
-                      {m.latencyMs}ms
-                    </span>
-                  </div>
-                  <h3 className="mt-1 text-sm font-bold text-foreground transition group-hover:text-primary">
-                    {m.name}
-                  </h3>
-                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                    {m.tagline}
-                  </p>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-[11px]">
-                  <span className="text-muted-foreground">ROC-AUC: <span className="font-semibold text-foreground">{m.rocAuc.toFixed(3)}</span></span>
-                  <span className="text-muted-foreground">F1: <span className="font-semibold text-foreground">{(m.f1 * 100).toFixed(1)}%</span></span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Feature Hub Navigation Cards */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Link
-            to="/monitor"
-            className="group rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-safe/50 hover:bg-safe/5"
-          >
-            <div className="flex items-center justify-between">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-safe/10 text-safe">
-                <Activity className="h-5 w-5 animate-pulse" />
-              </div>
-              <span className="rounded-full border border-safe/30 bg-safe/10 px-2 py-0.5 text-[10px] font-bold text-safe">
-                Live Feed
-              </span>
-            </div>
-            <h3 className="mt-3 text-sm font-bold">Live Blockchain Stream</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Stream newly mined Ethereum blocks and transactions scored live as they enter the mempool.
-            </p>
-          </Link>
-
-          <Link
-            to="/batch"
-            className="group rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-primary/50 hover:bg-primary/5"
-          >
-            <div className="flex items-center justify-between">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
-                <Layers className="h-5 w-5" />
-              </div>
-              <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                CSV Pipeline
-              </span>
-            </div>
-            <h3 className="mt-3 text-sm font-bold">Batch Transaction Scanner</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Upload historical CSV dumps to batch-score thousands of transactions with statistical distribution graphs.
-            </p>
-          </Link>
-
-          <Link
-            to="/reports"
-            className="group rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-warn/50 hover:bg-warn/5"
-          >
-            <div className="flex items-center justify-between">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-warn/10 text-warn">
-                <Download className="h-5 w-5" />
-              </div>
-              <span className="rounded-full border border-warn/30 bg-warn/10 px-2 py-0.5 text-[10px] font-bold text-warn">
-                Cryptographic Audit
-              </span>
-            </div>
-            <h3 className="mt-3 text-sm font-bold">Forensic Audit Reports</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Generate executive cryptographic incident reports with compliance checklists and evidence waterfalls.
-            </p>
-          </Link>
-        </div>
-
-        {/* Recent Cases Section */}
-        <div>
-          <div className="flex items-center justify-between pb-3">
-            <div>
-              <h2 className="text-base font-bold tracking-tight">Recent Investigations</h2>
-              <p className="text-xs text-muted-foreground">
-                Audit history of scored transactions and consensus evaluations.
-              </p>
-            </div>
-            <Link
-              to="/cases"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-            >
-              View All Cases <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-
-          <Panel className="border-border bg-card p-0">
-            {loaded && recent.length === 0 ? (
-              <div className="p-8">
-                <EmptyState
-                  title="No investigations yet"
-                  description="Score a transaction above or load a sample attack preset to start your session."
-                  action={
-                    <button
-                      onClick={() => loadPreset(SAMPLE_PRESETS[0])}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                    >
-                      Run Flash Loan Sample
-                    </button>
-                  }
-                />
-              </div>
-            ) : !loaded ? (
-              <div className="p-4">
-                <SkeletonRows count={4} />
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30 text-left text-xs text-muted-foreground">
-                      <th className="px-4 py-2.5 font-medium">Case ID</th>
-                      <th className="px-4 py-2.5 font-medium">Transaction Hash</th>
-                      <th className="px-4 py-2.5 font-medium">Risk Score</th>
-                      <th className="px-4 py-2.5 font-medium">Verdict</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Timestamp</th>
-                      <th className="w-16 px-4 py-2.5 text-right font-medium">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recent.map((r) => (
-                      <tr key={r.id} className="border-b border-border last:border-b-0 hover:bg-accent/40">
-                        <td className="px-4 py-3 font-mono text-xs font-medium text-foreground">
-                          {r.id}
-                        </td>
-                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                          {short(r.hash, 12)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold tabular-nums">{r.risk.toFixed(1)}%</span>
-                            <RiskBadge level={r.level} />
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 font-medium">
-                          {verdictLabel(r.verdict)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground">
-                          {r.at.replace("T", " ").replace("Z", "")}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => navigate({ to: "/detect", search: { hash: r.hash, aegisRun: true } })}
-                            className="rounded px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/10"
-                          >
-                            Inspect
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Panel>
         </div>
       </div>
     </ModuleShell>
   );
 }
+
+const FALLBACK_ROWS: Row[] = [
+  {
+    id: "tx-1",
+    hash: "0x8a3f9e2b1c4d5a6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e",
+    verdict: "FRAUD",
+    risk: 94.2,
+    level: "high",
+    at: new Date(Date.now() - 12000).toISOString(),
+  },
+  {
+    id: "tx-2",
+    hash: "0x91c28ae4b5d6f7a8c9e0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2",
+    verdict: "SUSPICIOUS_ACTIVITY",
+    risk: 87.5,
+    level: "elevated",
+    at: new Date(Date.now() - 42000).toISOString(),
+  },
+  {
+    id: "tx-3",
+    hash: "0x71ab90ced1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8",
+    verdict: "LEGITIMATE",
+    risk: 12.0,
+    level: "safe",
+    at: new Date(Date.now() - 120000).toISOString(),
+  },
+];

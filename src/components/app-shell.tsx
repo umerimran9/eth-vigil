@@ -54,29 +54,29 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "NETWORK",
     items: [
       { to: "/", label: "Overview", icon: LayoutDashboard },
-      { to: "/monitor", label: "Live Stream", icon: Activity, badge: "Mempool" },
+      { to: "/monitor", label: "Live Stream", icon: Activity, badge: "Live" },
     ],
   },
   {
-    label: "INVESTIGATE",
+    label: "DETECTION",
     items: [
-      { to: "/detect", label: "Transaction Intelligence", icon: Radar },
+      { to: "/detect", label: "Investigate", icon: Radar },
       { to: "/batch", label: "Batch Scanner", icon: Layers },
-      { to: "/cases", label: "Case Archive", icon: FolderSearch },
+      { to: "/cases", label: "Case History", icon: FolderSearch },
     ],
   },
   {
     label: "INTELLIGENCE",
     items: [
       { to: "/models", label: "AI Models (7)", icon: Brain },
-      { to: "/analytics", label: "Threat Analytics", icon: BarChart2 },
+      { to: "/analytics", label: "Analytics", icon: BarChart2 },
       { to: "/reports", label: "Audit Reports", icon: Download },
     ],
   },
   {
     label: "SYSTEM",
     items: [
-      { to: "/system", label: "Health & Telemetry", icon: Gauge },
+      { to: "/system", label: "System Health", icon: Gauge },
       { to: "/settings", label: "Settings", icon: Settings },
     ],
   },
@@ -120,9 +120,9 @@ function ThemeToggle() {
       onClick={cycle}
       title={`Theme: ${theme} (click to toggle)`}
       aria-label={`Current theme is ${theme}. Click to switch.`}
-      className="inline-flex h-7 w-7 items-center justify-center rounded border border-border bg-card text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:bg-secondary hover:text-foreground"
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-4 w-4" />
     </button>
   );
 }
@@ -132,26 +132,28 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
 
   return (
-    <nav className="flex h-full flex-col justify-between p-3.5">
-      <div className="space-y-5">
-        {/* Web3 Terminal Brand Header */}
-        <Link to="/" onClick={onNavigate} className="flex items-center gap-2.5 px-1.5 py-1 group">
-          <div className="grid h-7 w-7 place-items-center rounded border border-border bg-secondary text-foreground transition-colors group-hover:border-primary/50">
-            <Box className="h-3.5 w-3.5 text-primary" />
+    <nav className="flex h-full flex-col justify-between p-4">
+      <div className="space-y-6">
+        {/* Brand Header */}
+        <Link to="/" onClick={onNavigate} className="flex items-center gap-3 px-2 py-1 group">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/30 transition-transform group-hover:scale-105">
+            <Box className="h-5 w-5" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5 font-mono text-xs font-bold tracking-tight text-foreground">
-              <span>AEGIS</span>
-              <span className="rounded bg-primary/10 px-1 py-0.2 text-[9px] font-semibold text-primary">v2.4</span>
+            <div className="flex items-center gap-1.5 font-bold tracking-tight text-foreground text-sm">
+              <span>Aegis</span>
+              <span className="rounded-full bg-primary/15 px-1.5 py-0.2 font-mono text-[9px] font-semibold text-primary">
+                v2.4
+              </span>
             </div>
-            <div className="text-[10px] text-muted-foreground font-mono">Ethereum Intelligence</div>
+            <div className="text-[11px] text-muted-foreground">Ethereum Security</div>
           </div>
         </Link>
 
         {/* Navigation Sections */}
         {NAV_GROUPS.map((group) => (
-          <div key={group.label} className="space-y-0.5">
-            <div className="px-2 pb-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          <div key={group.label} className="space-y-1">
+            <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
               {group.label}
             </div>
             <ul className="space-y-0.5">
@@ -163,23 +165,23 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                       to={item.to}
                       onClick={onNavigate}
                       className={cn(
-                        "group flex items-center justify-between rounded px-2 py-1.5 text-xs font-medium transition-colors",
+                        "group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-all duration-150",
                         active
-                          ? "bg-secondary text-foreground font-semibold border-l-2 border-primary"
-                          : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
+                          ? "bg-primary/15 text-primary font-semibold shadow-xs"
+                          : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
                       )}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         <item.icon
                           className={cn(
-                            "h-3.5 w-3.5 shrink-0 transition-colors",
+                            "h-4 w-4 shrink-0 transition-colors",
                             active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
                           )}
                         />
                         <span>{item.label}</span>
                       </div>
                       {item.badge ? (
-                        <span className="rounded bg-safe/10 px-1 py-0.2 font-mono text-[9px] font-semibold text-safe">
+                        <span className="rounded-full bg-safe/10 px-2 py-0.5 font-mono text-[9px] font-semibold text-safe">
                           {item.badge}
                         </span>
                       ) : null}
@@ -192,18 +194,18 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </div>
 
-      {/* Web3 Network Telemetry Footer */}
-      <div className="rounded border border-border bg-card/80 p-2.5">
-        <div className="flex items-center justify-between text-[11px]">
+      {/* Network Telemetry Card Footer */}
+      <div className="rounded-xl border border-border bg-card/90 p-3 shadow-xs">
+        <div className="flex items-center justify-between text-xs">
           <span className="font-semibold text-foreground flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-safe animate-pulse" />
+            <span className="h-2 w-2 rounded-full bg-safe animate-pulse" />
             Ethereum Mainnet
           </span>
           <span className="font-mono text-[10px] text-muted-foreground flex items-center gap-0.5">
             <Flame className="h-3 w-3 text-warn" /> 28 Gwei
           </span>
         </div>
-        <div className="mt-1 font-mono text-[10px] text-muted-foreground">
+        <div className="mt-1.5 font-mono text-[10px] text-muted-foreground">
           Block #19,485,021 · 7 Models Active
         </div>
       </div>
@@ -258,37 +260,37 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Web3 Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 overflow-y-auto border-r border-border bg-card/70 backdrop-blur-md lg:block">
+      {/* Sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 overflow-y-auto border-r border-border bg-card/70 backdrop-blur-md lg:block">
         <SidebarNav />
       </aside>
 
       {/* Mobile Drawer */}
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-        <SheetContent side="left" className="w-56 overflow-y-auto bg-card p-0">
-          <SheetTitle className="sr-only">Web3 Navigation Menu</SheetTitle>
+        <SheetContent side="left" className="w-60 overflow-y-auto bg-card p-0">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           <SidebarNav onNavigate={() => setMobileNavOpen(false)} />
         </SheetContent>
       </Sheet>
 
-      {/* Main Terminal Canvas */}
-      <div className="lg:pl-56">
-        <header className="sticky top-0 z-20 flex h-12 items-center justify-between gap-3 border-b border-border bg-background/90 px-4 backdrop-blur-md sm:px-6">
+      {/* Main Canvas */}
+      <div className="lg:pl-60">
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileNavOpen(true)}
               aria-label="Open navigation"
-              className="inline-flex h-7 w-7 items-center justify-center rounded border border-border text-muted-foreground transition hover:bg-secondary hover:text-foreground lg:hidden"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:bg-secondary hover:text-foreground lg:hidden"
             >
               <Menu className="h-4 w-4" />
             </button>
 
-            {/* On-Chain Search Bar */}
+            {/* Global Search Bar */}
             <button
               onClick={() => setCmdOpen(true)}
-              className="flex h-7 items-center gap-2 rounded border border-border bg-card px-2.5 text-xs text-muted-foreground transition hover:border-primary/40 hover:bg-secondary sm:w-72"
+              className="flex h-8 items-center gap-2 rounded-xl border border-border bg-card px-3 text-xs text-muted-foreground transition hover:border-primary/40 hover:bg-secondary sm:w-72"
             >
-              <Search className="h-3 w-3" />
+              <Search className="h-3.5 w-3.5" />
               <span className="flex-1 text-left font-mono text-[11px] truncate">
                 Search tx (0x...), wallet, block, contract...
               </span>
@@ -299,9 +301,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2.5">
-            {/* Live Network Pill */}
-            <div className="hidden items-center gap-2 rounded border border-border bg-card px-2.5 py-0.5 text-xs sm:flex">
-              <span className={cn("h-1.5 w-1.5 rounded-full", liveConnected ? "bg-safe" : "bg-warn")} />
+            {/* Live Network Status Pill */}
+            <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-3 py-1 text-xs sm:flex">
+              <span className={cn("h-2 w-2 rounded-full", liveConnected ? "bg-safe" : "bg-warn")} />
               <span className="font-mono text-[11px] text-muted-foreground">
                 Mainnet <span className="font-medium text-foreground">#19,485,021</span>
               </span>
@@ -309,9 +311,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             <Link
               to="/detect"
-              className="hidden items-center gap-1.5 rounded bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-xs transition hover:opacity-90 sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm shadow-primary/25 transition hover:opacity-90 sm:inline-flex"
             >
-              <Radar className="h-3 w-3" />
+              <Radar className="h-3.5 w-3.5" />
               <span>Investigate</span>
             </Link>
 
@@ -319,20 +321,20 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-6">{children}</main>
+        <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6">{children}</main>
       </div>
 
-      {/* On-Chain Command Search Palette */}
+      {/* Command Search Palette */}
       <CommandDialog open={cmdOpen} onOpenChange={setCmdOpen}>
         <CommandInput placeholder="Search transaction (0x...), wallet, block, contract, case..." />
         <CommandList>
           <CommandEmpty>No on-chain records found.</CommandEmpty>
           {recent.length > 0 ? (
-            <CommandGroup heading="Recent On-Chain Investigations">
+            <CommandGroup heading="Recent Investigations">
               {recent.map((r) => (
                 <CommandItem key={r.id} value={`${r.id} ${r.hash}`} asChild>
                   <Link to="/cases" onClick={() => setCmdOpen(false)}>
-                    <FolderSearch className="mr-2 h-3.5 w-3.5" />
+                    <FolderSearch className="mr-2 h-4 w-4" />
                     <span className="font-mono text-xs">{r.hash.slice(0, 14)}…{r.hash.slice(-6)}</span>
                     {r.verdict ? (
                       <span className="ml-auto font-mono text-[11px] font-medium text-primary">{r.verdict}</span>
@@ -347,7 +349,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {group.items.map((item) => (
                 <CommandItem key={item.to} value={item.label} asChild>
                   <Link to={item.to} onClick={() => setCmdOpen(false)}>
-                    <item.icon className="mr-2 h-3.5 w-3.5" />
+                    <item.icon className="mr-2 h-4 w-4" />
                     {item.label}
                   </Link>
                 </CommandItem>
