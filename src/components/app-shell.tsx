@@ -50,18 +50,18 @@ interface RecentCase {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Platform",
+    label: "Network",
     items: [
-      { to: "/", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/", label: "Network Overview", icon: LayoutDashboard },
       { to: "/monitor", label: "Live Stream", icon: Activity, badge: "Live" },
     ],
   },
   {
-    label: "Detection",
+    label: "Investigate",
     items: [
-      { to: "/detect", label: "Investigate", icon: Radar },
+      { to: "/detect", label: "Transaction", icon: Radar },
       { to: "/batch", label: "Batch Scanner", icon: Layers },
-      { to: "/cases", label: "Case History", icon: FolderSearch },
+      { to: "/cases", label: "Cases", icon: FolderSearch },
     ],
   },
   {
@@ -73,9 +73,9 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Configuration",
+    label: "System",
     items: [
-      { to: "/system", label: "System Health", icon: Gauge },
+      { to: "/system", label: "Health", icon: Gauge },
       { to: "/settings", label: "Settings", icon: Settings },
     ],
   },
