@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
-import { ModuleShell, PageHeader, Panel } from "@/components/ui-kit";
+import { ModuleShell, PageHeader, Panel, SectionHeading } from "@/components/ui-kit";
 import { MODELS } from "@/lib/platform-data";
 
 export const Route = createFileRoute("/settings")({
@@ -11,102 +11,104 @@ export const Route = createFileRoute("/settings")({
       {
         name: "description",
         content:
-          "Configure the Ethereum data feed, risk thresholds, active ensemble members and alerting for the Aegis fraud detection platform.",
+          "Local display preferences for the Aegis fraud detection platform: risk threshold and ensemble membership shown in the UI.",
       },
       { property: "og:title", content: "Settings — Aegis" },
       {
         property: "og:description",
-        content: "Tune thresholds, feeds and ensemble membership.",
+        content: "Tune the risk threshold and ensemble membership shown across the UI.",
       },
     ],
   }),
   component: Settings,
 });
 
+const THRESHOLD_KEY = "aegis:settings:threshold";
+const ACTIVE_MODELS_KEY = "aegis:settings:activeModels";
+
 function Settings() {
-  const [threshold, setThreshold] = useState(72);
-  const [active, setActive] = useState<string[]>(MODELS.map((m) => m.id));
+  // localStorage doesn't exist during SSR -- render the defaults on the
+  // server, then read/apply anything saved once mounted in the browser.
+  const [threshold, setThreshold] = useState<number>(72);
+  const [active, setActive] = useState<string[]>(() => MODELS.map((m) => m.id));
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    const savedThreshold = localStorage.getItem(THRESHOLD_KEY);
+    if (savedThreshold) setThreshold(Number(savedThreshold));
+    const savedActive = localStorage.getItem(ACTIVE_MODELS_KEY);
+    if (savedActive) setActive(JSON.parse(savedActive));
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) localStorage.setItem(THRESHOLD_KEY, String(threshold));
+  }, [hydrated, threshold]);
+
+  useEffect(() => {
+    if (hydrated) localStorage.setItem(ACTIVE_MODELS_KEY, JSON.stringify(active));
+  }, [hydrated, active]);
 
   return (
     <ModuleShell>
       <PageHeader
-        eyebrow="Settings"
-        title="Tune the command center."
-        description="Feed configuration, decision thresholds and ensemble membership. Changes propagate to the live scoring path immediately."
+        title="Settings"
+        description="Display preferences saved to this browser. None of them change how the backend scores a transaction."
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* Three short settings, laid out as a list. They were behind three
+          tabs, which hid two of them behind a click each and made the page
+          look larger than the two controls it actually contains. */}
+      <div className="mx-auto max-w-2xl space-y-3">
         <Panel>
-          <h2 className="text-sm font-semibold">Chain data feed</h2>
-          <div className="mt-5 space-y-4 text-xs">
-            <div>
-              <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                Etherscan API key
-              </label>
-              <input
-                type="password"
-                defaultValue="••••••••••••••••"
-                className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-4 py-3 font-mono outline-none focus:border-cyan/40"
-              />
-            </div>
-            <div>
-              <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                Poll interval
-              </label>
-              <input
-                defaultValue="1.6s"
-                className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-4 py-3 font-mono outline-none focus:border-cyan/40"
-              />
-            </div>
-          </div>
-        </Panel>
-
-        <Panel delay={0.08}>
-          <h2 className="text-sm font-semibold">High-risk threshold</h2>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Scores above this value are escalated to the compliance queue.
-          </p>
-          <div className="mt-7 flex items-center gap-5">
+          <SectionHeading
+            title="High-risk threshold"
+            hint="Display cutoff used only where the backend has not supplied a verdict."
+          />
+          <div className="mt-5 flex items-center gap-5">
             <input
               type="range"
               min={30}
               max={95}
               value={threshold}
               onChange={(e) => setThreshold(Number(e.target.value))}
-              className="h-1.5 w-full appearance-none rounded-full bg-white/10 accent-cyan"
+              aria-label="High-risk threshold"
+              className="h-1.5 w-full appearance-none rounded-full bg-accent accent-[var(--brand)]"
             />
-            <span className="font-display text-2xl font-semibold tabular-nums text-cyan">
+            <span className="w-10 shrink-0 text-right text-xl font-semibold tabular-nums">
               {threshold}
             </span>
           </div>
         </Panel>
 
-        <Panel delay={0.14} className="lg:col-span-2">
-          <h2 className="text-sm font-semibold">Ensemble membership</h2>
-          <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {MODELS.map((m) => {
-              const on = active.includes(m.id);
-              return (
-                <div
-                  key={m.id}
-                  className="flex items-center justify-between gap-3 rounded-2xl glass-soft px-4 py-3.5"
-                >
-                  <div>
-                    <div className="text-xs font-medium">{m.name}</div>
-                    <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
-                      {m.latencyMs} ms
-                    </div>
-                  </div>
-                  <Switch
-                    checked={on}
-                    onCheckedChange={(v) =>
-                      setActive((prev) => (v ? [...prev, m.id] : prev.filter((x) => x !== m.id)))
-                    }
-                  />
-                </div>
-              );
-            })}
+        <Panel>
+          <SectionHeading
+            title="Ensemble shown on the Models page"
+            hint={`The backend always scores with every available model regardless of this.`}
+          />
+          <div className="mt-4 divide-y divide-border">
+            {MODELS.map((m) => (
+              <div key={m.id} className="flex items-center justify-between gap-3 py-2.5">
+                <span className="text-sm">{m.name}</span>
+                <Switch
+                  checked={active.includes(m.id)}
+                  aria-label={m.name}
+                  onCheckedChange={(v) =>
+                    setActive((prev) => (v ? [...prev, m.id] : prev.filter((x) => x !== m.id)))
+                  }
+                />
+              </div>
+            ))}
           </div>
+        </Panel>
+
+        <Panel>
+          <SectionHeading title="Chain data feed" />
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The Etherscan key lives in the backend's <code className="font-mono text-xs">.env</code>{" "}
+            and is read by <code className="font-mono text-xs">tools/live_ingest_etherscan.py</code>
+            . It is not editable here.
+          </p>
         </Panel>
       </div>
     </ModuleShell>

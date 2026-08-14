@@ -1,120 +1,129 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "motion/react";
-import { ArrowUpRight, Cpu } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { ModuleShell, PageHeader, Panel } from "@/components/ui-kit";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { MODELS } from "@/lib/platform-data";
 
 export const Route = createFileRoute("/models/")({
   head: () => ({
     meta: [
-      { title: "AI Models — Aegis Ensemble" },
+      { title: "Models — Aegis" },
       {
         name: "description",
         content:
-          "Seven production fraud-detection models: LightGBM, XGBoost, Random Forest, Logistic Regression, MLP, FT Transformer and TabNet, with full metrics.",
+          "The production fraud-detection ensemble: LightGBM, XGBoost, Random Forest, Logistic Regression, MLP and TabNet, with full metrics.",
       },
-      { property: "og:title", content: "AI Models — Aegis Ensemble" },
+      { property: "og:title", content: "Models — Aegis" },
       {
         property: "og:description",
-        content: "Explore architecture, metrics and inference speed for each model in the ensemble.",
+        content:
+          "Explore architecture, metrics and inference speed for each model in the ensemble.",
       },
     ],
   }),
   component: Models,
 });
 
+const COLUMNS = [
+  { key: "prAuc", label: "PR AUC", format: (m: (typeof MODELS)[number]) => m.prAuc.toFixed(3) },
+  { key: "rocAuc", label: "ROC AUC", format: (m: (typeof MODELS)[number]) => m.rocAuc.toFixed(3) },
+  {
+    key: "precision",
+    label: "Precision",
+    format: (m: (typeof MODELS)[number]) => `${(m.precision * 100).toFixed(1)}%`,
+  },
+  {
+    key: "recall",
+    label: "Recall",
+    format: (m: (typeof MODELS)[number]) => `${(m.recall * 100).toFixed(1)}%`,
+  },
+  { key: "f1", label: "F1", format: (m: (typeof MODELS)[number]) => `${(m.f1 * 100).toFixed(1)}%` },
+] as const;
+
+/**
+ * One table, not a card grid plus a table underneath it. The page previously
+ * showed every model twice -- six cards carrying three metrics each, then a
+ * comparison table carrying seven -- which is duplication rather than
+ * hierarchy. Comparing six models across six metrics is a table's job, and
+ * the model name is the link into its workspace.
+ */
 function Models() {
   return (
     <ModuleShell>
       <PageHeader
-        eyebrow="AI models"
-        title="Seven specialists, fully instrumented."
-        description="Each model is a first-class workspace: architecture, ROC and PR curves, confusion matrix, SHAP behaviour, latency envelope, advantages and honest limitations."
+        title="Models"
+        description="Stored evaluation results for the ensemble. These are historical measurements, not live predictions — run a transaction on Investigate for that."
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {MODELS.map((m, i) => (
-          <motion.div
-            key={m.id}
-            initial={{ opacity: 0, y: 26 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.07, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            whileHover={{ y: -7 }}
-            style={{ transformPerspective: 1000 }}
-          >
-            <Link
-              to="/models/$modelId"
-              params={{ modelId: m.id }}
-              className="group relative block h-full overflow-hidden rounded-3xl glass-panel p-7"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-cyan/80">
-                    {m.family}
-                  </span>
-                  <h2 className="mt-2 font-display text-2xl font-semibold">{m.name}</h2>
-                </div>
-                <Cpu className="h-5 w-5 text-electric" strokeWidth={1.5} />
-              </div>
-              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{m.tagline}</p>
-
-              <dl className="mt-7 grid grid-cols-3 gap-3 border-t border-white/8 pt-5">
-                {[
-                  ["Accuracy", `${(m.accuracy * 100).toFixed(1)}%`],
-                  ["ROC AUC", m.rocAuc.toFixed(3)],
-                  ["Latency", `${m.latencyMs} ms`],
-                ].map(([k, v]) => (
-                  <div key={k}>
-                    <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-                      {k}
-                    </dt>
-                    <dd className="mt-1 font-display text-base font-semibold tabular-nums">{v}</dd>
-                  </div>
+      <Panel className="p-0">
+        <div className="overflow-x-auto">
+          <Table className="min-w-[760px] text-sm">
+            <TableHeader>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="h-auto px-5 py-2.5 text-xs font-medium text-muted-foreground">
+                  Model
+                </TableHead>
+                {COLUMNS.map((c) => (
+                  <TableHead
+                    key={c.key}
+                    className="h-auto px-4 py-2.5 text-right text-xs font-medium text-muted-foreground"
+                  >
+                    {c.label}
+                  </TableHead>
                 ))}
-              </dl>
-
-              <span className="mt-6 inline-flex items-center gap-1.5 text-xs text-cyan/80">
-                Open workspace
-                <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </span>
-              <div
-                className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-60"
-                style={{ background: "var(--gradient-core)" }}
-              />
-            </Link>
-          </motion.div>
-        ))}
-      </div>
-
-      <Panel delay={0.4} className="mt-4">
-        <h2 className="text-sm font-semibold">Ensemble comparison</h2>
-        <div className="mt-5 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-xs">
-            <thead className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              <tr>
-                {["Model", "Accuracy", "Precision", "Recall", "F1", "PR AUC", "Latency"].map((h) => (
-                  <th key={h} className="pb-3 font-normal">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
+                <TableHead className="h-auto px-4 py-2.5 text-right text-xs font-medium text-muted-foreground">
+                  Latency
+                </TableHead>
+                <TableHead className="h-auto w-8 px-2 py-2.5" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {MODELS.map((m) => (
-                <tr key={m.id} className="border-t border-white/6">
-                  <td className="py-3 font-medium">{m.name}</td>
-                  <td className="tabular-nums">{(m.accuracy * 100).toFixed(1)}%</td>
-                  <td className="tabular-nums">{(m.precision * 100).toFixed(1)}%</td>
-                  <td className="tabular-nums">{(m.recall * 100).toFixed(1)}%</td>
-                  <td className="tabular-nums">{(m.f1 * 100).toFixed(1)}%</td>
-                  <td className="tabular-nums">{m.prAuc.toFixed(3)}</td>
-                  <td className="tabular-nums text-cyan">{m.latencyMs} ms</td>
-                </tr>
+                <TableRow key={m.id} className="border-border">
+                  <TableCell className="px-5 py-3">
+                    <Link to="/models/$modelId" params={{ modelId: m.id }} className="group block">
+                      <div className="font-medium transition group-hover:text-primary">
+                        {m.name}
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">{m.family}</div>
+                    </Link>
+                  </TableCell>
+                  {COLUMNS.map((c) => (
+                    <TableCell key={c.key} className="px-4 py-3 text-right tabular-nums">
+                      {c.format(m)}
+                    </TableCell>
+                  ))}
+                  <TableCell className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                    {m.latencyMs} ms
+                  </TableCell>
+                  <TableCell className="px-2 py-3">
+                    <Link
+                      to="/models/$modelId"
+                      params={{ modelId: m.id }}
+                      aria-label={`Open ${m.name}`}
+                      className="grid h-6 w-6 place-items-center rounded text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </Panel>
+
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        Latency figures are stored estimates for a single prediction, not measurements taken from
+        this deployment.
+      </p>
     </ModuleShell>
   );
 }

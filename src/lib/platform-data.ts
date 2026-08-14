@@ -6,8 +6,8 @@ export type ModelId =
   | "random-forest"
   | "logistic-regression"
   | "mlp"
-  | "ft-transformer"
-  | "tabnet";
+  | "tabnet"
+  | "transformer";
 
 export interface AiModel {
   id: ModelId;
@@ -23,7 +23,6 @@ export interface AiModel {
   prAuc: number;
   latencyMs: number;
   params: string;
-  confusion: { tn: number; fp: number; fn: number; tp: number };
   advantages: string[];
   limitations: string[];
 }
@@ -33,25 +32,24 @@ export const MODELS: AiModel[] = [
     id: "lightgbm",
     name: "LightGBM",
     family: "Gradient Boosting",
-    tagline: "Leaf-wise boosting tuned for high-cardinality wallet features.",
+    tagline: "Leaf-wise gradient boosting (Case C class-weighted baseline).",
     architecture:
-      "Histogram-based gradient boosted decision trees with leaf-wise growth, 1,200 estimators, depth-limited at 12 with L2 leaf regularisation.",
-    accuracy: 0.987,
-    precision: 0.974,
-    recall: 0.961,
-    f1: 0.967,
-    rocAuc: 0.996,
-    prAuc: 0.981,
-    latencyMs: 4,
-    params: "1.2K trees · 31 leaves",
-    confusion: { tn: 18420, fp: 132, fn: 168, tp: 4280 },
+      "Histogram-based gradient boosted decision trees with leaf-wise growth tuned on 61 tabular features.",
+    accuracy: 0.9231,
+    precision: 0.7763,
+    recall: 0.9884,
+    f1: 0.8696,
+    rocAuc: 0.9656,
+    prAuc: 0.8398,
+    latencyMs: 1.8,
+    params: "1.2K trees · Case C",
     advantages: [
-      "Fastest inference of the ensemble at production scale",
-      "Native handling of sparse, skewed transaction volumes",
+      "Sub-2ms inference latency at production scale",
+      "Native handling of zero-inflated token features",
       "Stable feature attributions across retrains",
     ],
     limitations: [
-      "Sensitive to extreme class imbalance without tuned weights",
+      "Requires class-weight tuning for imbalance",
       "Weaker on unseen wallet behaviour patterns",
     ],
   },
@@ -59,125 +57,182 @@ export const MODELS: AiModel[] = [
     id: "xgboost",
     name: "XGBoost",
     family: "Gradient Boosting",
-    tagline: "Regularised boosting, the accuracy anchor of the consensus.",
+    tagline: "Regularised gradient boosting with scale_pos_weight.",
     architecture:
-      "Level-wise gradient boosted trees with depth 8, subsample 0.8, colsample 0.7 and scale_pos_weight calibrated to the fraud base rate.",
-    accuracy: 0.985,
-    precision: 0.978,
-    recall: 0.953,
-    f1: 0.965,
-    rocAuc: 0.995,
-    prAuc: 0.979,
-    latencyMs: 6,
-    params: "900 trees · depth 8",
-    confusion: { tn: 18461, fp: 91, fn: 209, tp: 4239 },
+      "Level-wise gradient boosted decision trees with depth 6, subsample 0.8, colsample 0.8, early stopping 50.",
+    accuracy: 0.8302,
+    precision: 0.7002,
+    recall: 0.6025,
+    f1: 0.6477,
+    rocAuc: 0.9402,
+    prAuc: 0.7528,
+    latencyMs: 2.5,
+    params: "600 trees · depth 6",
     advantages: [
+      "0.9402 ROC-AUC, 0.7528 PR-AUC — walk-forward, templated-excluded (Case C)",
       "Strong regularisation reduces false positives",
-      "Battle-tested calibration for risk scoring",
     ],
-    limitations: ["Slower to retrain on full chain history", "Higher memory footprint"],
+    limitations: ["Higher memory footprint", "Requires 61-column exact ordering"],
   },
   {
     id: "random-forest",
     name: "Random Forest",
     family: "Bagging Ensemble",
-    tagline: "Variance-killing baseline with transparent decision paths.",
+    tagline: "Bagged decision tree baseline over wallet-grouped splits.",
     architecture:
-      "600 fully-grown decision trees over bootstrapped samples, Gini criterion, sqrt feature sampling per split.",
-    accuracy: 0.972,
-    precision: 0.951,
-    recall: 0.934,
-    f1: 0.942,
-    rocAuc: 0.988,
-    prAuc: 0.961,
-    latencyMs: 11,
+      "600 fully-grown decision trees over bootstrapped samples with Gini impurity criterion.",
+    accuracy: 0.8573,
+    precision: 0.7943,
+    recall: 0.6071,
+    f1: 0.6882,
+    rocAuc: 0.9566,
+    prAuc: 0.8026,
+    latencyMs: 12.0,
     params: "600 trees",
-    confusion: { tn: 18338, fp: 214, fn: 294, tp: 4154 },
-    advantages: ["Highly robust to noisy labels", "Auditable per-tree decision paths"],
-    limitations: ["Larger artefact size", "Recall trails boosted models"],
-  },
-  {
-    id: "logistic-regression",
-    name: "Logistic Regression",
-    family: "Linear Model",
-    tagline: "The interpretability reference every audit starts from.",
-    architecture:
-      "L2-penalised logistic regression on standardised features, LBFGS solver, isotonic probability calibration.",
-    accuracy: 0.931,
-    precision: 0.893,
-    recall: 0.871,
-    f1: 0.882,
-    rocAuc: 0.958,
-    prAuc: 0.9,
-    latencyMs: 1,
-    params: "48 coefficients",
-    confusion: { tn: 18089, fp: 463, fn: 574, tp: 3874 },
-    advantages: ["Sub-millisecond scoring", "Coefficients map directly to regulator language"],
-    limitations: ["Cannot capture feature interactions", "Underfits laundering chains"],
-  },
-  {
-    id: "mlp",
-    name: "MLP",
-    family: "Neural Network",
-    tagline: "Dense network capturing non-linear wallet interactions.",
-    architecture:
-      "Feed-forward network 48 → 256 → 128 → 64 → 1 with GELU activations, dropout 0.2 and batch normalisation.",
-    accuracy: 0.968,
-    precision: 0.944,
-    recall: 0.941,
-    f1: 0.942,
-    rocAuc: 0.986,
-    prAuc: 0.957,
-    latencyMs: 8,
-    params: "412K params",
-    confusion: { tn: 18304, fp: 248, fn: 262, tp: 4186 },
-    advantages: ["Learns interaction effects gradient trees miss", "Cheap to fine-tune online"],
-    limitations: ["Requires careful feature scaling", "Less stable attributions"],
-  },
-  {
-    id: "ft-transformer",
-    name: "FT Transformer",
-    family: "Tabular Transformer",
-    tagline: "Attention over feature tokens — the deep specialist.",
-    architecture:
-      "Feature tokeniser plus 6 transformer blocks, 8 attention heads, d_token 192, with CLS-token readout head.",
-    accuracy: 0.983,
-    precision: 0.969,
-    recall: 0.966,
-    f1: 0.967,
-    rocAuc: 0.994,
-    prAuc: 0.977,
-    latencyMs: 27,
-    params: "3.1M params",
-    confusion: { tn: 18415, fp: 137, fn: 151, tp: 4297 },
-    advantages: [
-      "Best recall on novel obfuscation patterns",
-      "Attention maps double as explanations",
-    ],
-    limitations: ["Highest inference latency", "Needs GPU for batch workloads"],
+    advantages: ["0.9566 ROC-AUC, 0.8026 PR-AUC — walk-forward, templated-excluded (Case C)", "Auditable per-tree decision paths"],
+    limitations: ["Larger artefact size (~220 MB)", "Recall 60.71% at decile-9, templated-excluded"],
   },
   {
     id: "tabnet",
     name: "TabNet",
     family: "Attentive Tabular NN",
-    tagline: "Sequential attention with built-in feature selection.",
+    tagline: "Sequential attention with built-in sparse feature selection.",
     architecture:
-      "8 decision steps with sparse attentive feature masks, ghost batch normalisation and sparsity regularisation γ=1.3.",
-    accuracy: 0.976,
-    precision: 0.958,
-    recall: 0.949,
-    f1: 0.953,
-    rocAuc: 0.99,
-    prAuc: 0.968,
-    latencyMs: 19,
-    params: "1.4M params",
-    confusion: { tn: 18367, fp: 185, fn: 227, tp: 4221 },
-    advantages: ["Instance-level feature masks are natively explainable", "Sparse, compact decisions"],
-    limitations: ["Sensitive to learning-rate schedule", "Longer training cycles"],
+      "Sparse attentive feature masks across 8 decision steps with ghost batch normalisation.",
+    accuracy: 0.8333,
+    precision: 0.7366,
+    recall: 0.5560,
+    f1: 0.6336,
+    rocAuc: 0.8718,
+    prAuc: 0.6436,
+    latencyMs: 8.0,
+    params: "TabNet Zip Checkpoint",
+    advantages: ["F1 63.36% at decile-9, templated-excluded", "Instance-level sparse masks"],
+    limitations: ["Requires non-negative index input bounds", "Higher training latency"],
+  },
+  {
+    id: "transformer",
+    name: "FT-Transformer",
+    family: "Tabular Transformer",
+    tagline: "Feature-Tokenizer Transformer with Multi-Head Self-Attention.",
+    architecture:
+      "Learned numerical & categorical feature tokenizers feeding into 3-layer TransformerEncoder with CLS token pooling.",
+    accuracy: 0.8640,
+    precision: 0.7580,
+    recall: 0.6240,
+    f1: 0.6845,
+    rocAuc: 0.9320,
+    prAuc: 0.7810,
+    latencyMs: 4.2,
+    params: "3 layers · 32 d_model",
+    advantages: ["Learned inter-feature multi-head attention", "Superior contextual embeddings for high-cardinality tokens"],
+    limitations: ["Requires GPU for high-throughput batching", "Needs calibrated feature scaling"],
+  },
+  {
+    id: "mlp",
+    name: "PyTorch MLP",
+    family: "Neural Network",
+    tagline: "Deep multi-layer perceptron capturing non-linear feature interactions.",
+    architecture:
+      "Deep neural network 61 → 256 → 128 → 64 → 1 with GELU activations and batch normalisation.",
+    accuracy: 0.8224,
+    precision: 0.7416,
+    recall: 0.4836,
+    f1: 0.5854,
+    rocAuc: 0.9212,
+    prAuc: 0.7389,
+    latencyMs: 1.1,
+    params: "TorchScript export",
+    advantages: ["0.9212 ROC-AUC, 0.7389 PR-AUC — walk-forward, templated-excluded (Case C)", "Precision 74.16% at decile-9"],
+    limitations: ["Requires restricted RobustScaler guardrails", "Lower recall on unseen wallets"],
+  },
+  {
+    id: "logistic-regression",
+    name: "Logistic Regression",
+    family: "Linear Model",
+    tagline: "L2-penalised linear interpretability reference.",
+    architecture:
+      "L2-regularised logistic regression fit on restricted RobustScaler features (gas_efficiency, cumulative_gas_used).",
+    accuracy: 0.8020,
+    precision: 0.5718,
+    recall: 0.9413,
+    f1: 0.7115,
+    rocAuc: 0.9235,
+    prAuc: 0.8509,
+    latencyMs: 0.3,
+    params: "61 coefficients",
+    advantages: ["Sub-millisecond inference (0.3 ms)", "Linear coefficients map directly to regulator language"],
+    limitations: ["Cannot capture complex feature interactions", "Requires era-relative z-scoring"],
   },
 ];
 
-export const modelById = (id: string) => MODELS.find((m) => m.id === id);
+export const CONSENSUS_STRATEGIES = [
+  {
+    id: "weighted_average",
+    name: "Confidence Weighted (Default)",
+    description: "Weights models by benchmark PR-AUC / ROC-AUC validation metrics.",
+  },
+  {
+    id: "majority_vote",
+    name: "Majority Vote (≥ 4 / 7)",
+    description: "Requires at least 4 of 7 AI models to vote fraud before flagging.",
+  },
+  {
+    id: "max_risk",
+    name: "Pessimistic / High-Security Quarantine",
+    description: "Assigns overall risk to the highest scoring model for maximum threat defense.",
+  },
+  {
+    id: "unanimous",
+    name: "Unanimous Agreement",
+    description: "Requires 100% agreement across all 7 models before taking automated action.",
+  },
+] as const;
+
+export const SAMPLE_PRESETS = [
+  {
+    name: "Flash Loan Arbitrage Exploit",
+    type: "High Risk",
+    hash: "0x8a3f9e2b1c4d5a6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e",
+    from: "0x9842a9b31d0458e0405c1920b784a92c4b8109ef",
+    to: "0x7a250d5630b4cf539739df2c5dacb4c659f2488d",
+    value: "145.8",
+    gasUsed: "485000",
+  },
+  {
+    name: "Phishing Token Drainer",
+    type: "High Risk",
+    hash: "0x4e2b8c9a1d3f5e7a9b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a",
+    from: "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+    to: "0x00000000006c3852cbef3e08e8df289169ede581",
+    value: "12.4",
+    gasUsed: "120000",
+  },
+  {
+    name: "Uniswap V3 Standard Swap",
+    type: "Legitimate",
+    hash: "0x1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e",
+    from: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+    to: "0xe592427a0aece92de3edee1f18e0157c05861564",
+    value: "1.45",
+    gasUsed: "142000",
+  },
+  {
+    name: "Whale Cold Storage Transfer",
+    type: "Legitimate",
+    hash: "0x3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b",
+    from: "0xbe0eb53f46cd790cd13851d5eff43d12404d33e8",
+    to: "0x28c6c06298d514db089934071355e5743bf21d60",
+    value: "850.0",
+    gasUsed: "21000",
+  },
+];
+
+export const modelById = (id: string) => {
+  const norm = id.toLowerCase().replace(/_/g, "-");
+  if (norm === "ft-transformer" || norm === "fttransformer") return MODELS.find((m) => m.id === "transformer");
+  return MODELS.find((m) => m.id === norm || m.id === id || m.id.replace(/-/g, "_") === id);
+};
 
 export const rocCurve = (auc: number) =>
   Array.from({ length: 21 }, (_, i) => {
@@ -201,14 +256,16 @@ export interface Feature {
 }
 
 export const FEATURES: Feature[] = [
-  { key: "in_out_ratio", label: "In / out value ratio", importance: 0.21, shap: 0.34, value: "8.42" },
-  { key: "avg_time_between", label: "Avg. time between txns", importance: 0.17, shap: -0.19, value: "38s" },
-  { key: "unique_counterparties", label: "Unique counterparties", importance: 0.14, shap: 0.27, value: "126" },
-  { key: "gas_anomaly", label: "Gas price anomaly", importance: 0.12, shap: 0.16, value: "+3.1σ" },
-  { key: "contract_age", label: "Counterparty contract age", importance: 0.1, shap: -0.12, value: "4 days" },
-  { key: "tx_burst", label: "Burst transaction count", importance: 0.09, shap: 0.22, value: "47 / 10m" },
-  { key: "mixer_proximity", label: "Mixer proximity (hops)", importance: 0.09, shap: 0.29, value: "2" },
-  { key: "erc20_diversity", label: "ERC-20 token diversity", importance: 0.08, shap: -0.07, value: "19" },
+  { key: "erc_20_Symbol_End_Is_Digit", label: "ERC-20 Symbol End Is Digit", importance: 0.244, shap: +0.342, value: "1.0" },
+  { key: "gas_efficiency_era_rel", label: "Gas Efficiency (Era-Relative Z)", importance: 0.210, shap: +0.285, value: "+2.45" },
+  { key: "gas_efficiency", label: "Gas Efficiency (gas_used / gas)", importance: 0.188, shap: +0.184, value: "1.000" },
+  { key: "cumulative_gas_used_era_rel", label: "Cumulative Gas Used (Era-Relative Z)", importance: 0.175, shap: +0.165, value: "+1.82" },
+  { key: "cumulative_gas_used", label: "Cumulative Gas Used in Block", importance: 0.163, shap: -0.042, value: "1,200,000" },
+  { key: "erc_20_Name_Has_Digit", label: "ERC-20 Name Contains Digit", importance: 0.155, shap: +0.215, value: "1.0" },
+  { key: "erc_20_Symbol_Same_As_Name", label: "ERC-20 Symbol Same As Name", importance: 0.050, shap: -0.012, value: "0.0" },
+  { key: "effective_gas_price", label: "Effective Gas Price (Wei)", importance: 0.045, shap: +0.089, value: "24,500,000,000" },
+  { key: "total_gas_cost", label: "Total Gas Cost (Eth)", importance: 0.042, shap: +0.076, value: "0.000514" },
+  { key: "value", label: "Transaction Ether Value", importance: 0.038, shap: +0.095, value: "1.45 ETH" },
 ];
 
 export const FRAUD_TREND = [
@@ -223,7 +280,7 @@ export const FRAUD_TREND = [
 
 export const MODEL_USAGE = MODELS.map((m, i) => ({
   name: m.name,
-  runs: 4200 - i * 420 + (i % 2 === 0 ? 260 : 0),
+  runs: 4500 - i * 380 + (i % 2 === 0 ? 210 : 0),
 }));
 
 export const TIMELINE = Array.from({ length: 24 }, (_, i) => ({
@@ -231,11 +288,6 @@ export const TIMELINE = Array.from({ length: 24 }, (_, i) => ({
   risk: 18 + Math.round(28 * Math.abs(Math.sin(i / 3.4)) + (i % 5) * 2),
   throughput: 320 + Math.round(210 * Math.abs(Math.cos(i / 4.1))),
 }));
-
-const HASH_CHARS = "0123456789abcdef";
-export const randomHash = (len = 64) =>
-  "0x" +
-  Array.from({ length: len }, () => HASH_CHARS[Math.floor(Math.random() * 16)]).join("");
 
 export interface Txn {
   hash: string;
@@ -250,34 +302,46 @@ export interface Txn {
 }
 
 export const levelFromRisk = (risk: number): RiskLevel =>
-  risk > 72 ? "high" : risk > 38 ? "elevated" : "safe";
+  risk >= 75 ? "high" : risk >= 40 ? "elevated" : "safe";
 
-export const makeTxn = (block: number): Txn => {
-  const risk = Math.random() < 0.14 ? 60 + Math.random() * 40 : Math.random() * 55;
-  return {
-    hash: randomHash(),
-    from: randomHash(40),
-    to: randomHash(40),
-    value: Number((Math.random() * 42).toFixed(4)),
-    gas: Number((Math.random() * 60 + 8).toFixed(1)),
-    block,
-    risk: Number(risk.toFixed(1)),
-    level: levelFromRisk(risk),
-    ts: Date.now(),
-  };
+export const levelFromVerdict = (verdict: string | undefined, riskFallback?: number): RiskLevel => {
+  switch (verdict) {
+    case "HIGH_RISK_FRAUD":
+    case "FRAUD":
+      return "high";
+    case "SUSPICIOUS_ACTIVITY":
+      return "elevated";
+    case "LEGITIMATE":
+      return "safe";
+    default:
+      return riskFallback !== undefined ? levelFromRisk(riskFallback) : "safe";
+  }
 };
 
-const HISTORY_RISKS = [88.4, 12.1, 64.9, 91.2, 7.4, 41.6, 22.8, 77.3, 5.9, 33.2, 96.1, 18.7, 52.4, 9.8];
-const MODES = ["Hash", "Batch", "Manual", "Consensus"] as const;
+export const actionLabel = (action: string | undefined): string => {
+  switch (action) {
+    case "BLOCK_AND_QUARANTINE":
+      return "Block & Quarantine";
+    case "FLAG_FOR_MANUAL_REVIEW":
+      return "Flag for L2 Review";
+    case "PASS_AND_MONITOR":
+      return "Pass & Monitor";
+    default:
+      return "Review Manually";
+  }
+};
 
-export const HISTORY = HISTORY_RISKS.map((risk, i) => ({
-  id: `AN-${4820 - i}`,
-  hash: randomHash(),
-  model: MODELS[i % MODELS.length]!.name,
-  risk,
-  level: levelFromRisk(risk),
-  confidence: Number((0.72 + Math.random() * 0.27).toFixed(3)),
-  mode: MODES[i % 4]!,
-  at: new Date(Date.now() - i * 5400000).toISOString(),
-}));
-
+export const verdictLabel = (verdict: string | undefined): string => {
+  switch (verdict) {
+    case "HIGH_RISK_FRAUD":
+      return "High Risk Fraud";
+    case "SUSPICIOUS_ACTIVITY":
+      return "Suspicious Activity";
+    case "LEGITIMATE":
+      return "Legitimate";
+    case "FRAUD":
+      return "Fraud Detected";
+    default:
+      return verdict ?? "Unknown";
+  }
+};

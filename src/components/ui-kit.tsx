@@ -1,75 +1,66 @@
-import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { RiskLevel } from "@/lib/platform-data";
 
+// Flat dashboard primitives. No glass, no blur, no gradients, one card
+// pattern. The additions below exist because the same three components
+// (Panel + PageHeader + StatTile) were being bent to cover every job on every
+// page, which is what made twelve different screens read as one template.
+
 export function Panel({
   children,
   className,
-  delay = 0,
-  tilt = false,
+  delay: _delay,
+  tilt: _tilt,
 }: {
   children: ReactNode;
-  className?: string;
-  delay?: number;
-  tilt?: boolean;
+  className?: string | undefined;
+  /** kept for call-site compatibility; entrance animations were removed */
+  delay?: number | undefined;
+  tilt?: boolean | undefined;
 }) {
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 22, filter: "blur(6px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ delay, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      {...(tilt
-        ? {
-            whileHover: { y: -5, rotateX: 1.4, rotateY: -1.4 },
-            style: { transformPerspective: 1200 },
-          }
-        : {})}
-      className={cn("rounded-3xl glass-panel p-6", className)}
-    >
-      {children}
-    </motion.section>
-  );
-
+  return <div className={cn("card-flat rounded-lg p-5", className)}>{children}</div>;
 }
 
+/**
+ * Page title block.
+ *
+ * `description` is optional now. Every page used to carry a paragraph under
+ * its H1 explaining what the page was and, more often, reassuring the reader
+ * that the numbers were real ("nothing hardcoded, nothing simulated"). A
+ * product that works does not narrate its own trustworthiness in the header;
+ * it just shows correct data and puts caveats next to the specific number
+ * they apply to. Kept for the few pages where a line of orientation genuinely
+ * helps, dropped everywhere else.
+ *
+ * `eyebrow` is optional for the same reason -- a kicker above every title is
+ * a template artifact when the title is already unambiguous.
+ */
 export function PageHeader({
   eyebrow,
   title,
   description,
   aside,
 }: {
-  eyebrow: string;
+  eyebrow?: string | undefined;
   title: string;
-  description: string;
-  aside?: ReactNode;
+  description?: string | undefined;
+  aside?: ReactNode | undefined;
 }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-6 pb-8">
+    <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="max-w-2xl">
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="font-mono text-[11px] uppercase tracking-[0.34em] text-cyan/80"
-        >
-          {eyebrow}
-        </motion.p>
-        <motion.h1
-          initial={{ opacity: 0, y: 16, filter: "blur(8px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-3 text-4xl font-semibold sm:text-5xl"
-        >
+        {eyebrow ? (
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {eyebrow}
+          </p>
+        ) : null}
+        <h1 className={cn("text-xl font-semibold tracking-tight sm:text-2xl", eyebrow && "mt-1.5")}>
           {title}
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
-          className="mt-4 text-[15px] leading-relaxed text-muted-foreground"
-        >
-          {description}
-        </motion.p>
+        </h1>
+        {description ? (
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
+        ) : null}
       </div>
       {aside ? <div className="shrink-0">{aside}</div> : null}
     </header>
@@ -77,15 +68,58 @@ export function PageHeader({
 }
 
 export function ModuleShell({ children }: { children: ReactNode }) {
+  return <div className="pb-16">{children}</div>;
+}
+
+/**
+ * Section label inside a page. Sits above a table or a group of rows without
+ * the weight of a second H1, and takes a trailing slot for the one action
+ * that belongs to that section.
+ */
+export function SectionHeading({
+  title,
+  hint,
+  action,
+  className,
+}: {
+  title: string;
+  // `| undefined` throughout: tsconfig has exactOptionalPropertyTypes, so a
+  // caller passing a conditionally-undefined value is a type error without it.
+  hint?: string | undefined;
+  action?: ReactNode | undefined;
+  className?: string | undefined;
+}) {
   return (
-    <motion.main
-      initial={{ opacity: 0, scale: 0.985 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-      className="mx-auto w-full max-w-[1400px] px-5 pb-40 pt-24 sm:px-8"
-    >
-      {children}
-    </motion.main>
+    <div className={cn("flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1", className)}>
+      <h2 className="text-sm font-semibold">{title}</h2>
+      {action ? <div className="ml-auto">{action}</div> : null}
+      {hint ? <p className="w-full text-xs text-muted-foreground">{hint}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * One labelled value. The workhorse for transaction detail, where a
+ * definition list beats a card grid: it stays scannable at twenty rows, and
+ * it does not imply that every field is equally important the way a wall of
+ * StatTiles does.
+ */
+export function KeyValue({
+  label,
+  children,
+  mono = false,
+  className,
+}: {
+  label: string;
+  children: ReactNode;
+  mono?: boolean | undefined;
+  className?: string | undefined;
+}) {
+  return (
+    <div className={cn("min-w-0", className)}>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className={cn("mt-0.5 truncate text-sm", mono && "font-mono text-xs")}>{children}</dd>
+    </div>
   );
 }
 
@@ -94,7 +128,7 @@ export function StatTile({
   value,
   sub,
   accent = "electric",
-  delay = 0,
+  delay: _delay,
 }: {
   label: string;
   value: string;
@@ -103,44 +137,32 @@ export function StatTile({
   delay?: number;
 }) {
   const tone = {
-    electric: "text-electric",
-    cyan: "text-cyan",
+    electric: "text-foreground",
+    cyan: "text-foreground",
+    violet: "text-foreground",
     safe: "text-safe",
     risk: "text-risk",
-    violet: "text-violet",
   }[accent];
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -4 }}
-      className="relative overflow-hidden rounded-3xl glass-soft p-5"
-    >
-      <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-        {label}
-      </div>
-      <div className={cn("mt-3 font-display text-3xl font-semibold tabular-nums", tone)}>
-        {value}
-      </div>
+    <div className="card-flat rounded-lg p-4">
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      <div className={cn("mt-2 text-2xl font-semibold tabular-nums", tone)}>{value}</div>
       {sub ? <div className="mt-1 text-xs text-muted-foreground">{sub}</div> : null}
-      <div className="pointer-events-none absolute inset-x-0 -bottom-16 h-24 opacity-40 blur-2xl"
-        style={{ background: "var(--gradient-core)" }} />
-    </motion.div>
+    </div>
   );
 }
 
 const LEVEL_STYLE: Record<RiskLevel, string> = {
-  safe: "border-safe/35 bg-safe/12 text-safe",
-  elevated: "border-warn/35 bg-warn/12 text-warn",
-  high: "border-risk/40 bg-risk/14 text-risk",
+  safe: "border-safe/30 bg-safe/10 text-safe",
+  elevated: "border-warn/30 bg-warn/10 text-warn",
+  high: "border-risk/30 bg-risk/10 text-risk",
 };
 
-export function RiskBadge({ level, label }: { level: RiskLevel; label?: string }) {
+export function RiskBadge({ level, label }: { level: RiskLevel; label?: string | undefined }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em]",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
         LEVEL_STYLE[level],
       )}
     >
@@ -150,24 +172,63 @@ export function RiskBadge({ level, label }: { level: RiskLevel; label?: string }
   );
 }
 
-export function Meter({ value, tone = "electric" }: { value: number; tone?: string }) {
+export function Meter({ value, tone = "brand" }: { value: number; tone?: string }) {
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/8">
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: `${Math.min(100, value)}%` }}
-        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        className="h-full rounded-full"
-        style={{ background: `var(--${tone})` }}
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      <div
+        className="h-full rounded-full transition-[width] duration-500"
+        style={{ width: `${Math.min(100, Math.max(0, value))}%`, background: `var(--${tone})` }}
       />
     </div>
   );
 }
+
+/**
+ * Designed empty state. Previously each page hand-rolled a centred paragraph,
+ * and several offered no way out of the empty condition -- a dead end is a
+ * worse failure than an ugly one.
+ */
+export function EmptyState({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body?: string | undefined;
+  action?: ReactNode | undefined;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
+      <p className="text-sm font-medium">{title}</p>
+      {body ? (
+        <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">{body}</p>
+      ) : null}
+      {action ? <div className="mt-3">{action}</div> : null}
+    </div>
+  );
+}
+
+/** Loading placeholder that matches the shape of what is arriving. */
+export function SkeletonRows({
+  rows = 4,
+  className,
+}: {
+  rows?: number | undefined;
+  className?: string | undefined;
+}) {
+  return (
+    <div className={cn("space-y-2", className)} aria-hidden="true">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="h-9 animate-pulse rounded-md bg-muted" />
+      ))}
+    </div>
+  );
+}
+
+export const short = (s: string, n = 6) => `${s.slice(0, n + 2)}…${s.slice(-4)}`;
 
 export function Mono({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <span className={cn("font-mono text-xs text-muted-foreground", className)}>{children}</span>
   );
 }
-
-export const short = (s: string, n = 6) => `${s.slice(0, n + 2)}…${s.slice(-4)}`;

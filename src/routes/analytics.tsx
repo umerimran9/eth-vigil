@@ -1,14 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
   Legend,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -16,172 +13,229 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ModuleShell, PageHeader, Panel, StatTile } from "@/components/ui-kit";
-import { FRAUD_TREND, MODEL_USAGE, TIMELINE } from "@/lib/platform-data";
+import {
+  EmptyState,
+  ModuleShell,
+  PageHeader,
+  Panel,
+  RiskBadge,
+  SectionHeading,
+  short,
+} from "@/components/ui-kit";
+import { levelFromVerdict, verdictLabel } from "@/lib/platform-data";
+import { apiFetch } from "@/lib/api";
+import type { RiskLevel } from "@/lib/platform-data";
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({
     meta: [
-      { title: "Analytics — Fraud Trends & Model Usage · Aegis" },
+      { title: "Analytics — Aegis" },
       {
         name: "description",
         content:
-          "Fraud trends, prediction timelines, detection statistics and model usage across the Aegis Ethereum monitoring platform.",
+          "Real aggregate statistics computed from this session's analysis history — no fabricated data.",
       },
-      { property: "og:title", content: "Analytics — Fraud Trends & Model Usage · Aegis" },
+      { property: "og:title", content: "Analytics — Aegis" },
       {
         property: "og:description",
-        content: "Interactive analytics on detection volume, risk over time and model utilisation.",
+        content: "Verdict distribution, risk histogram and recent activity, all from real history.",
       },
     ],
   }),
   component: Analytics,
 });
 
-const axis = { stroke: "oklch(0.66 0.024 264)", fontSize: 10, fontFamily: "var(--font-mono)" };
+const axis = { stroke: "var(--muted-foreground)", fontSize: 10, fontFamily: "var(--font-mono)" };
 const tooltipStyle = {
-  background: "oklch(0.17 0.02 268)",
-  border: "1px solid oklch(0.99 0.01 265 / 12%)",
-  borderRadius: 12,
+  background: "var(--card)",
+  border: "1px solid var(--border)",
+  borderRadius: 8,
   fontSize: 11,
+  color: "var(--foreground)",
 };
-const PIE_COLORS = [
-  "var(--electric)",
-  "var(--cyan-accent)",
-  "var(--violet-accent)",
-  "var(--safe)",
-  "var(--warn)",
-  "var(--risk)",
-  "var(--indigo-accent)",
-];
 
+interface Row {
+  id: string;
+  hash: string;
+  risk: number;
+  verdict: string;
+  level: RiskLevel;
+  confidence: number;
+  at: string;
+}
+
+// Every number on this page is computed from the real GET /api/v1/history
+// payload -- this route previously showed 100% hardcoded stats/charts; that
+// content is gone, not relabeled.
 function Analytics() {
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    apiFetch<any>("/api/v1/history")
+      .then(({ ok, data }) => {
+        if (ok && data?.history) {
+          setRows(
+            data.history.map((h: any) => ({
+              id: h.id,
+              hash: h.hash,
+              risk: h.risk,
+              verdict: h.verdict ?? "",
+              level: levelFromVerdict(h.verdict, h.risk),
+              confidence: h.confidence ?? 0,
+              at: h.at,
+            })),
+          );
+        }
+      })
+      .finally(() => setLoaded(true));
+  }, []);
+
+  const verdictDist = useMemo(() => {
+    const counts: Record<RiskLevel, number> = { safe: 0, elevated: 0, high: 0 };
+    rows.forEach((r) => counts[r.level]++);
+    return [
+      { name: "Legitimate", value: counts.safe, color: "var(--safe)" },
+      { name: "Elevated", value: counts.elevated, color: "var(--warn)" },
+      { name: "High risk", value: counts.high, color: "var(--risk)" },
+    ];
+  }, [rows]);
+
+  const riskHistogram = useMemo(() => {
+    const buckets = [0, 0, 0, 0, 0];
+    rows.forEach((r) => {
+      const idx = Math.min(4, Math.floor(r.risk / 20));
+      buckets[idx]!++;
+    });
+    return buckets.map((count, i) => ({ range: `${i * 20}-${i * 20 + 20}`, count }));
+  }, [rows]);
+
+  const agreementHistogram = useMemo(() => {
+    const buckets = [0, 0, 0, 0, 0];
+    rows.forEach((r) => {
+      const idx = Math.min(4, Math.floor((r.confidence * 100) / 20));
+      buckets[idx]!++;
+    });
+    return buckets.map((count, i) => ({ range: `${i * 20}-${i * 20 + 20}%`, count }));
+  }, [rows]);
+
+  const avgRisk = rows.length ? rows.reduce((s, r) => s + r.risk, 0) / rows.length : 0;
+  const avgAgreement = rows.length
+    ? (rows.reduce((s, r) => s + r.confidence, 0) / rows.length) * 100
+    : 0;
+  const highRisk = rows.filter((r) => r.level === "high");
+  const recent = rows.slice(0, 8);
+
+  if (loaded && rows.length === 0) {
+    return (
+      <ModuleShell>
+        <PageHeader title="Analytics" />
+        <Panel>
+          <EmptyState
+            title="Nothing analysed yet"
+            body="Analytics aggregates this session's investigations. Run one and the charts fill in."
+            action={
+              <Link
+                to="/detect"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+              >
+                Start an investigation
+              </Link>
+            }
+          />
+        </Panel>
+      </ModuleShell>
+    );
+  }
+
   return (
     <ModuleShell>
       <PageHeader
-        eyebrow="Analytics"
-        title="Patterns, not paperwork."
-        description="Detection volume, risk concentration and model utilisation across the last rolling window. Charts draw themselves as they enter view."
+        title="Analytics"
+        description={`Aggregates over the ${rows.length} analysis${rows.length === 1 ? "" : "es"} run against this backend session. Restarting the backend clears them.`}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Txns analysed" value="18.94M" sub="lifetime" accent="cyan" />
-        <StatTile label="Fraud detected" value="41,208" sub="0.22% base rate" accent="risk" delay={0.05} />
-        <StatTile label="False positive rate" value="0.71%" sub="↓ 0.14 wk/wk" accent="safe" delay={0.1} />
-        <StatTile label="Avg. latency" value="11.4 ms" sub="consensus path" accent="violet" delay={0.15} />
-      </div>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <Panel delay={0.1}>
-          <h2 className="text-sm font-semibold">Fraud trend</h2>
-          <div className="mt-5 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={FRAUD_TREND}>
-                <defs>
-                  <linearGradient id="flaggedFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--risk)" stopOpacity={0.55} />
-                    <stop offset="100%" stopColor="var(--risk)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="clearedFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--cyan-accent)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="var(--cyan-accent)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="oklch(0.99 0.01 265 / 7%)" vertical={false} />
-                <XAxis dataKey="day" {...axis} />
-                <YAxis {...axis} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Area
-                  type="monotone"
-                  dataKey="cleared"
-                  stroke="var(--cyan-accent)"
-                  fill="url(#clearedFill)"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="flagged"
-                  stroke="var(--risk)"
-                  fill="url(#flaggedFill)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </Panel>
-
-        <Panel delay={0.15}>
-          <h2 className="text-sm font-semibold">Prediction timeline (24h)</h2>
-          <div className="mt-5 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={TIMELINE}>
-                <CartesianGrid stroke="oklch(0.99 0.01 265 / 7%)" vertical={false} />
-                <XAxis dataKey="hour" {...axis} interval={3} />
-                <YAxis {...axis} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Line
-                  type="monotone"
-                  dataKey="throughput"
-                  stroke="var(--electric)"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="risk"
-                  stroke="var(--violet-accent)"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Panel>
-
-        <Panel delay={0.2}>
-          <h2 className="text-sm font-semibold">Model usage</h2>
-          <div className="mt-5 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={MODEL_USAGE}>
-                <CartesianGrid stroke="oklch(0.99 0.01 265 / 7%)" vertical={false} />
-                <XAxis dataKey="name" {...axis} interval={0} angle={-18} height={50} dy={12} />
-                <YAxis {...axis} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="runs" radius={[8, 8, 0, 0]}>
-                  {MODEL_USAGE.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Panel>
-
-        <Panel delay={0.25}>
-          <h2 className="text-sm font-semibold">Detection distribution</h2>
-          <div className="mt-5 h-64">
+      {/* Three charts and a list, laid out in one scroll. They were behind
+          three tabs, which meant a page of four visualisations required three
+          clicks to see -- tabs used as pagination for content that fits. */}
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+        <Panel>
+          <SectionHeading title="Verdict distribution" />
+          <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={[
-                    { name: "Legitimate", value: 91.4 },
-                    { name: "Elevated", value: 6.2 },
-                    { name: "High risk", value: 2.4 },
-                  ]}
+                  data={verdictDist}
                   dataKey="value"
-                  innerRadius={62}
-                  outerRadius={98}
+                  nameKey="name"
+                  innerRadius={56}
+                  outerRadius={88}
                   paddingAngle={4}
                   stroke="none"
                 >
-                  {["var(--safe)", "var(--warn)", "var(--risk)"].map((c) => (
-                    <Cell key={c} fill={c} />
+                  {verdictDist.map((d) => (
+                    <Cell key={d.name} fill={d.color} />
                   ))}
                 </Pie>
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Tooltip contentStyle={tooltipStyle} />
               </PieChart>
             </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        <Panel>
+          <SectionHeading title="Risk score" hint="Count of analyses per 20-point band." />
+          <div className="mt-4 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={riskHistogram}>
+                <CartesianGrid stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="range" {...axis} />
+                <YAxis {...axis} allowDecimals={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="count" fill="var(--brand)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+        <Panel>
+          <SectionHeading title="Model agreement" hint="How often the ensemble converged." />
+          <div className="mt-4 h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={agreementHistogram}>
+                <CartesianGrid stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="range" {...axis} />
+                <YAxis {...axis} allowDecimals={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="count" fill="var(--brand)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        <Panel className="p-0">
+          <div className="px-5 py-4">
+            <SectionHeading
+              title="Recent"
+              hint={`${highRisk.length} of ${rows.length} flagged high risk · average ${avgRisk.toFixed(1)} · agreement ${avgAgreement.toFixed(0)}%`}
+            />
+          </div>
+          <div className="max-h-56 overflow-y-auto border-t border-border">
+            {recent.map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center gap-3 border-b border-border px-5 py-2 text-xs last:border-b-0"
+              >
+                <span className="font-mono text-muted-foreground">{short(r.hash)}</span>
+                <span className="ml-auto font-mono tabular-nums text-muted-foreground">
+                  {r.risk}
+                </span>
+                <RiskBadge level={r.level} label={verdictLabel(r.verdict)} />
+              </div>
+            ))}
           </div>
         </Panel>
       </div>

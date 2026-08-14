@@ -11,8 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { NavDock } from "@/components/nav-dock";
-import { AuroraField } from "@/components/aurora-field";
+import { AppShell } from "@/components/app-shell";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -81,10 +80,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Aegis — AI Ethereum Fraud Detection" },
-      { name: "description", content: "Real-time Ethereum monitoring and explainable AI fraud detection." },
+      {
+        name: "description",
+        content: "Real-time Ethereum monitoring and explainable AI fraud detection.",
+      },
       { name: "author", content: "Aegis" },
       { property: "og:title", content: "Aegis — AI Ethereum Fraud Detection" },
-      { property: "og:description", content: "Real-time Ethereum monitoring and explainable AI fraud detection." },
+      {
+        property: "og:description",
+        content: "Real-time Ethereum monitoring and explainable AI fraud detection.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
@@ -128,10 +133,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuroraField />
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <NavDock />
+      <AppShell>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </AppShell>
       <Toaster />
     </QueryClientProvider>
   );

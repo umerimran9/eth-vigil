@@ -12,13 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as BatchRouteImport } from './routes/batch'
-import { Route as ConsensusRouteImport } from './routes/consensus'
+import { Route as CasesRouteImport } from './routes/cases'
 import { Route as DetectRouteImport } from './routes/detect'
-import { Route as ExplainRouteImport } from './routes/explain'
-import { Route as HistoryRouteImport } from './routes/history'
 import { Route as MonitorRouteImport } from './routes/monitor'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SystemRouteImport } from './routes/system'
 import { Route as ModelsIndexRouteImport } from './routes/models.index'
 import { Route as ModelsModelIdRouteImport } from './routes/models.$modelId'
 
@@ -37,24 +36,14 @@ const BatchRoute = BatchRouteImport.update({
   path: '/batch',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ConsensusRoute = ConsensusRouteImport.update({
-  id: '/consensus',
-  path: '/consensus',
+const CasesRoute = CasesRouteImport.update({
+  id: '/cases',
+  path: '/cases',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetectRoute = DetectRouteImport.update({
   id: '/detect',
   path: '/detect',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExplainRoute = ExplainRouteImport.update({
-  id: '/explain',
-  path: '/explain',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HistoryRoute = HistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MonitorRoute = MonitorRouteImport.update({
@@ -72,6 +61,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SystemRoute = SystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ModelsIndexRoute = ModelsIndexRouteImport.update({
   id: '/models/',
   path: '/models/',
@@ -87,13 +81,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
-  '/consensus': typeof ConsensusRoute
+  '/cases': typeof CasesRoute
   '/detect': typeof DetectRoute
-  '/explain': typeof ExplainRoute
-  '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/system': typeof SystemRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
 }
@@ -101,13 +94,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
-  '/consensus': typeof ConsensusRoute
+  '/cases': typeof CasesRoute
   '/detect': typeof DetectRoute
-  '/explain': typeof ExplainRoute
-  '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/system': typeof SystemRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models': typeof ModelsIndexRoute
 }
@@ -116,13 +108,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
-  '/consensus': typeof ConsensusRoute
+  '/cases': typeof CasesRoute
   '/detect': typeof DetectRoute
-  '/explain': typeof ExplainRoute
-  '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/system': typeof SystemRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
 }
@@ -132,13 +123,12 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/batch'
-    | '/consensus'
+    | '/cases'
     | '/detect'
-    | '/explain'
-    | '/history'
     | '/monitor'
     | '/reports'
     | '/settings'
+    | '/system'
     | '/models/$modelId'
     | '/models/'
   fileRoutesByTo: FileRoutesByTo
@@ -146,13 +136,12 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/batch'
-    | '/consensus'
+    | '/cases'
     | '/detect'
-    | '/explain'
-    | '/history'
     | '/monitor'
     | '/reports'
     | '/settings'
+    | '/system'
     | '/models/$modelId'
     | '/models'
   id:
@@ -160,13 +149,12 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/batch'
-    | '/consensus'
+    | '/cases'
     | '/detect'
-    | '/explain'
-    | '/history'
     | '/monitor'
     | '/reports'
     | '/settings'
+    | '/system'
     | '/models/$modelId'
     | '/models/'
   fileRoutesById: FileRoutesById
@@ -175,13 +163,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   BatchRoute: typeof BatchRoute
-  ConsensusRoute: typeof ConsensusRoute
+  CasesRoute: typeof CasesRoute
   DetectRoute: typeof DetectRoute
-  ExplainRoute: typeof ExplainRoute
-  HistoryRoute: typeof HistoryRoute
   MonitorRoute: typeof MonitorRoute
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
+  SystemRoute: typeof SystemRoute
   ModelsModelIdRoute: typeof ModelsModelIdRoute
   ModelsIndexRoute: typeof ModelsIndexRoute
 }
@@ -209,11 +196,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BatchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/consensus': {
-      id: '/consensus'
-      path: '/consensus'
-      fullPath: '/consensus'
-      preLoaderRoute: typeof ConsensusRouteImport
+    '/cases': {
+      id: '/cases'
+      path: '/cases'
+      fullPath: '/cases'
+      preLoaderRoute: typeof CasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/detect': {
@@ -221,20 +208,6 @@ declare module '@tanstack/react-router' {
       path: '/detect'
       fullPath: '/detect'
       preLoaderRoute: typeof DetectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/explain': {
-      id: '/explain'
-      path: '/explain'
-      fullPath: '/explain'
-      preLoaderRoute: typeof ExplainRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/history': {
-      id: '/history'
-      path: '/history'
-      fullPath: '/history'
-      preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/monitor': {
@@ -258,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/system': {
+      id: '/system'
+      path: '/system'
+      fullPath: '/system'
+      preLoaderRoute: typeof SystemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/models/': {
       id: '/models/'
       path: '/models'
@@ -279,16 +259,25 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   BatchRoute: BatchRoute,
-  ConsensusRoute: ConsensusRoute,
+  CasesRoute: CasesRoute,
   DetectRoute: DetectRoute,
-  ExplainRoute: ExplainRoute,
-  HistoryRoute: HistoryRoute,
   MonitorRoute: MonitorRoute,
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,
+  SystemRoute: SystemRoute,
   ModelsModelIdRoute: ModelsModelIdRoute,
   ModelsIndexRoute: ModelsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
