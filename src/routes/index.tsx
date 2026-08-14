@@ -428,10 +428,10 @@ function Home() {
               <div className="p-8">
                 <EmptyState
                   title="No investigations yet"
-                  description="Score a transaction above or load a sample attack preset to start your session."
+                  body="Score a transaction above or load a sample attack preset to start your session."
                   action={
                     <button
-                      onClick={() => loadPreset(SAMPLE_PRESETS[0])}
+                      onClick={() => loadPreset(SAMPLE_PRESETS[0]!)}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
                     >
                       Run Flash Loan Sample
@@ -441,7 +441,7 @@ function Home() {
               </div>
             ) : !loaded ? (
               <div className="p-4">
-                <SkeletonRows count={4} />
+                <SkeletonRows rows={4} />
               </div>
             ) : (
               <div className="overflow-x-auto">
