@@ -849,13 +849,59 @@ function InvestigationView({
         </div>
       </Panel>
 
+      {/* On-Chain Transaction Flow Trace */}
+      <Panel className="border-border bg-card">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">On-Chain Transaction Flow Trace</h2>
+            <p className="text-xs text-muted-foreground">Entity-to-entity execution topology</p>
+          </div>
+          <span className="font-mono text-[10px] text-muted-foreground">3 Hops Identified</span>
+        </div>
+
+        {tx ? (
+          <div className="mt-3 flex flex-col gap-2 rounded border border-border bg-secondary/50 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded bg-card flex items-center justify-center font-mono text-[10px] font-bold border border-border">
+                SRC
+              </div>
+              <div>
+                <div className="text-[10px] text-muted-foreground font-mono uppercase">Sender Wallet</div>
+                <CopyValue value={tx.from_address} display={short(tx.from_address, 8)} />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-1.5 font-mono text-[10px] text-muted-foreground">
+              <span className="text-primary font-semibold">{tx.value_eth} ETH</span>
+              <span>───▶</span>
+              <span className="text-muted-foreground">({tx.gas_used.toLocaleString()} gas)</span>
+              <span>───▶</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded bg-card flex items-center justify-center font-mono text-[10px] font-bold border border-border text-primary">
+                DST
+              </div>
+              <div>
+                <div className="text-[10px] text-muted-foreground font-mono uppercase">Recipient / Contract</div>
+                {tx.to_address ? (
+                  <CopyValue value={tx.to_address} display={short(tx.to_address, 8)} />
+                ) : (
+                  <span className="font-mono text-xs text-foreground">Contract Creation</span>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </Panel>
+
       {/* On-chain Transaction Passport */}
-      <Panel className="border-border/80 bg-card/60">
-        <h2 className="text-sm font-bold">On-Chain Transaction Passport</h2>
+      <Panel className="border-border bg-card">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">On-Chain Transaction Passport</h2>
         <p className="text-xs text-muted-foreground">Raw execution metadata resolved from Ethereum mainnet</p>
 
         {tx ? (
-          <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          <dl className="mt-3 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
             <KeyValue label="Transaction Hash" mono>
               <CopyValue value={tx.hash} display={short(tx.hash, 12)} />
             </KeyValue>

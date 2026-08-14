@@ -120,125 +120,90 @@ function Home() {
 
   return (
     <ModuleShell>
-      <div className="space-y-6">
-        {/* Interactive 3D Blockchain Hero Card */}
-        <BlockchainHero3D />
-
-        {/* Hero Header Card */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs sm:p-8">
-          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-foreground">
-                <Box className="h-3.5 w-3.5 text-primary" />
-                <span>Ethereum Fraud Detection & ML Verification</span>
-              </div>
-              <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl text-foreground">
-                Machine Learning Detection & Explainable AI
-              </h1>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Score transactions across 7 machine learning models, inspect SHAP feature explainability narratives, and evaluate real-time Ethereum mainnet telemetry.
-              </p>
-            </div>
-
+      <div className="space-y-5">
+        {/* Section 1: Live Network Telemetry Surface */}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-border bg-card p-3">
+          <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowFypGuide(!showFypGuide)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-medium text-foreground transition hover:bg-secondary"
-              >
-                <HelpCircle className="h-4 w-4 text-primary" />
-                <span>{showFypGuide ? "Hide Feature Guide" : "How 33/61 Features Work"}</span>
-              </button>
+              <span className="h-2 w-2 rounded-full bg-safe animate-pulse" />
+              <span className="font-bold text-foreground">ETHEREUM MAINNET</span>
+            </div>
+            <span className="text-border">|</span>
+            <div className="text-muted-foreground">
+              Block: <span className="font-semibold text-foreground">#19,485,021</span>
+            </div>
+            <span className="text-border">|</span>
+            <div className="text-muted-foreground">
+              Base Fee: <span className="font-semibold text-foreground">28 Gwei</span>
+            </div>
+            <span className="text-border">|</span>
+            <div className="text-muted-foreground">
+              ML Serving: <span className="font-semibold text-safe">7/7 Models Online</span> (1.8ms P50)
             </div>
           </div>
 
-          {/* FYP Educational Architecture Breakdown Card (Collapsible) */}
-          {showFypGuide ? (
-            <div className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-5 text-xs leading-relaxed text-foreground">
-              <div className="flex items-center gap-2 text-sm font-bold text-primary">
-                <Brain className="h-4 w-4" />
-                <span>Understanding Your FYP Feature Vector & 7 Model Architecture</span>
-              </div>
-              <p className="mt-2 text-muted-foreground">
-                In your Ethereum Fraud Detection FYP, a raw transaction (e.g. sender, recipient, value, gas) is transformed into a <strong>61-dimensional engineered feature space</strong> (containing 33 core wallet behavioral metrics, era-relative z-scores, and token lexical heuristics).
-              </p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3 text-xs">
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <span className="font-semibold text-foreground">1. Wallet History & Token Signals</span>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    Analyzes historical sender/receiver patterns, ERC-20 token counts, and token symbol heuristics (e.g. symbols ending in digits used in phishing drainers).
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <span className="font-semibold text-foreground">2. Era-Relative Z-Scores</span>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    Normalizes gas efficiency and price against historical block eras, allowing models to catch multi-call flash loans and MEV bribery spikes.
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <span className="font-semibold text-foreground">3. 7-Model Ensemble Voting</span>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    Combines LightGBM, XGBoost, Random Forest, TabNet, FT-Transformer, MLP, and LogReg into weighted consensus with explainable SHAP narratives.
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {/* KPI Metrics Cards */}
-          <div className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-6 sm:grid-cols-4">
-            <div className="rounded-xl border border-border bg-background p-3.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                AI Model Ensemble
-              </span>
-              <div className="mt-1 flex items-baseline gap-1.5">
-                <span className="text-xl font-bold">7 Models</span>
-                <span className="text-[11px] font-medium text-safe">Active</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-border bg-background p-3.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Inference Speed
-              </span>
-              <div className="mt-1 flex items-baseline gap-1.5">
-                <span className="text-xl font-bold">~1.8 ms</span>
-                <span className="text-[11px] font-medium text-muted-foreground">P50</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-border bg-background p-3.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Live Ethereum Block
-              </span>
-              <div className="mt-1 flex items-baseline gap-1.5">
-                <span className="text-xl font-bold font-mono">#19,485,021</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-border bg-background p-3.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Flagged Fraud Threats
-              </span>
-              <div className="mt-1 flex items-baseline gap-1.5">
-                <span className="text-xl font-bold text-risk">{summary.high}</span>
-                <span className="text-[11px] font-medium text-muted-foreground">Quarantined</span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowFypGuide(!showFypGuide)}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-foreground transition hover:bg-muted"
+            >
+              <HelpCircle className="h-3.5 w-3.5 text-primary" />
+              <span>{showFypGuide ? "Hide Feature Spec" : "33/61 Feature Architecture"}</span>
+            </button>
           </div>
         </div>
 
-        {/* Quick Transaction Investigation Card */}
-        <Panel className="border-border bg-card">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="hero-hash" className="text-sm font-semibold">
-              Instant Transaction Investigation
-            </label>
+        {/* Section 2: Interactive 3D Blockchain Consensus & Entity Topology */}
+        <BlockchainHero3D />
+
+        {/* FYP Educational Feature Vector Architecture Breakdown (Collapsible) */}
+        {showFypGuide ? (
+          <div className="rounded border border-primary/20 bg-primary/5 p-4 text-xs leading-relaxed text-foreground">
+            <div className="flex items-center gap-2 text-xs font-bold text-primary font-mono uppercase tracking-wider">
+              <Brain className="h-3.5 w-3.5" />
+              <span>FYP On-Chain Feature Engineering Pipeline (61 Dimensions)</span>
+            </div>
+            <p className="mt-1.5 text-muted-foreground">
+              Raw RPC transaction payloads (hash, sender, receiver, gas, value) are transformed into a <strong>61-dimensional feature vector</strong> consisting of 33 core wallet behavioral statistics, temporal era-relative z-scores, and token lexical heuristics.
+            </p>
+            <div className="mt-3 grid gap-2.5 sm:grid-cols-3 text-xs">
+              <div className="rounded border border-border bg-card p-2.5">
+                <span className="font-semibold text-foreground">1. Wallet Historical Metrics</span>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Evaluates historical ERC-20 transfer velocities, unique contract creation counts, and token symbol heuristics.
+                </p>
+              </div>
+              <div className="rounded border border-border bg-card p-2.5">
+                <span className="font-semibold text-foreground">2. Era-Relative Z-Scores</span>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Normalizes gas price and efficiency against block epoch baselines to isolate flash-loan exploits and MEV spikes.
+                </p>
+              </div>
+              <div className="rounded border border-border bg-card p-2.5">
+                <span className="font-semibold text-foreground">3. 7-Model Ensemble Consensus</span>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Aggregates predictions from LightGBM, XGBoost, RF, TabNet, FT-Transformer, MLP, and LogReg with natural-language SHAP explainability.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Section 3: Instant On-Chain Transaction Scorer */}
+        <Panel className="border-border bg-card p-4">
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="hero-hash" className="text-xs font-bold uppercase tracking-wider text-foreground">
+                On-Chain Transaction Intelligence
+              </label>
+              <span className="font-mono text-[10px] text-muted-foreground">7 Models + SHAP Explainability</span>
+            </div>
             <span className="text-xs text-muted-foreground">
-              Enter any Ethereum transaction hash to extract on-chain signals, evaluate all 7 models, and generate a natural-language SHAP explanation paragraph.
+              Enter any Ethereum transaction hash to evaluate multi-model consensus risk and inspect natural-language SHAP feature contributions.
             </span>
           </div>
 
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
             <input
               id="hero-hash"
               value={hash}
@@ -246,17 +211,15 @@ function Home() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") analyse();
               }}
-              placeholder="0x… (e.g. 0x8a3f9e2b1c4d5a6e7f8a9b0c…)"
-              className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3.5 py-2.5 font-mono text-sm shadow-sm transition focus:border-primary focus:ring-1 focus:ring-primary"
+              placeholder="0x8a3f9e2b1c4d5a6e7f8a9b0c… or Paste Ethereum Hash"
+              className="min-w-0 flex-1 rounded border border-border bg-secondary px-3 py-2 font-mono text-xs text-foreground shadow-xs transition focus:border-primary focus:outline-none"
             />
             <button
               onClick={analyse}
-              disabled={!hash.trim()}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition hover:opacity-90 disabled:opacity-40"
+              className="inline-flex items-center justify-center gap-1.5 rounded bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-xs transition hover:opacity-90"
             >
-              <Radar className="h-4 w-4" />
+              <Radar className="h-3.5 w-3.5" />
               <span>Score Transaction</span>
-              <ArrowRight className="h-4 w-4" />
             </button>
           </div>
 
