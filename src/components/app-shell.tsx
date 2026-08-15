@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/command";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { apiFetch, WS_BASE_URL } from "@/lib/api";
+import { classifyQuery, useNetworkState } from "@/lib/network-state";
+import { EntityBadge, HexChip, type EntityKind } from "@/components/web3";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -194,22 +196,42 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </div>
 
-      {/* Network Telemetry Card Footer */}
-      <div className="rounded-xl border border-border bg-card/90 p-3 shadow-xs">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-foreground flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-safe animate-pulse" />
-            Ethereum Mainnet
-          </span>
-          <span className="font-mono text-[10px] text-muted-foreground flex items-center gap-0.5">
-            <Flame className="h-3 w-3 text-warn" /> 28 Gwei
-          </span>
-        </div>
-        <div className="mt-1.5 font-mono text-[10px] text-muted-foreground">
-          Block #19,485,021 · 7 Models Active
-        </div>
-      </div>
+      {/* Live chain context: the network this whole product is bound to */}
+      <SidebarNetwork />
     </nav>
+  );
+}
+
+function SidebarNetwork() {
+  const net = useNetworkState();
+  return (
+    <div className="rounded-md border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-foreground">
+          Ethereum Mainnet
+        </span>
+        <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-safe">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" />
+          live
+        </span>
+      </div>
+      <dl className="divide-y divide-border font-mono text-[10px]">
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <dt className="text-muted-foreground">head block</dt>
+          <dd className="tabular-nums text-foreground">{net.blockLabel}</dd>
+        </div>
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <dt className="flex items-center gap-1 text-muted-foreground">
+            <Flame className="h-2.5 w-2.5 text-warn" /> base fee
+          </dt>
+          <dd className="tabular-nums text-foreground">{net.baseFeeGwei.toFixed(1)} gwei</dd>
+        </div>
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <dt className="text-muted-foreground">detection</dt>
+          <dd className="text-safe">7 models online</dd>
+        </div>
+      </dl>
+    </div>
   );
 }
 
@@ -218,6 +240,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [recent, setRecent] = useState<RecentCase[]>([]);
   const [liveConnected, setLiveConnected] = useState(false);
+  const [query, setQuery] = useState("");
+  const net = useNetworkState();
+  const queryKind = classifyQuery(query);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -292,7 +317,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <Search className="h-3.5 w-3.5" />
               <span className="flex-1 text-left font-mono text-[11px] truncate">
-                Search tx (0x...), wallet, block, contract...
+                Search transaction, wallet, block, contract, entity…
               </span>
               <kbd className="hidden rounded border border-border bg-muted px-1.5 py-0.2 font-mono text-[9px] sm:inline">
                 ⌘K
@@ -301,11 +326,24 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2.5">
-            {/* Live Network Status Pill */}
-            <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-3 py-1 text-xs sm:flex">
-              <span className={cn("h-2 w-2 rounded-full", liveConnected ? "bg-safe" : "bg-warn")} />
-              <span className="font-mono text-[11px] text-muted-foreground">
-                Mainnet <span className="font-medium text-foreground">#19,485,021</span>
+            {/* Live chain read-out: block head + base fee, always present */}
+            <div className="hidden items-stretch divide-x divide-border overflow-hidden rounded-md border border-border bg-card font-mono text-[10px] md:flex">
+              <span className="flex items-center gap-1.5 px-2.5 py-1">
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    liveConnected ? "animate-pulse bg-safe" : "bg-warn",
+                  )}
+                />
+                <span className="uppercase tracking-wider text-muted-foreground">
+                  {liveConnected ? "Mainnet · live" : "Mainnet · cached"}
+                </span>
+              </span>
+              <span className="flex items-center px-2.5 py-1 tabular-nums text-foreground">
+                {net.blockLabel}
+              </span>
+              <span className="hidden items-center px-2.5 py-1 tabular-nums text-muted-foreground lg:flex">
+                {net.baseFeeGwei.toFixed(1)} gwei
               </span>
             </div>
 
@@ -326,9 +364,31 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Command Search Palette */}
       <CommandDialog open={cmdOpen} onOpenChange={setCmdOpen}>
-        <CommandInput placeholder="Search transaction (0x...), wallet, block, contract, case..." />
+        <CommandInput
+          value={query}
+          onValueChange={setQuery}
+          placeholder="Search transaction, wallet, block, contract, entity…"
+        />
         <CommandList>
-          <CommandEmpty>No on-chain records found.</CommandEmpty>
+          <CommandEmpty>No on-chain object or workspace matched.</CommandEmpty>
+          {queryKind !== "unknown" ? (
+            <CommandGroup heading="On-chain">
+              <CommandItem value={`onchain-${query}`} asChild>
+                <Link
+                  to="/detect"
+                  search={{ hash: query.trim(), aegisRun: queryKind === "transaction" }}
+                  onClick={() => setCmdOpen(false)}
+                  className="flex items-center gap-2"
+                >
+                  <EntityBadge kind={queryKind as EntityKind} />
+                  <HexChip value={query.trim()} lead={12} tail={8} />
+                  <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {queryKind === "block" ? "inspect block" : "run detection"}
+                  </span>
+                </Link>
+              </CommandItem>
+            </CommandGroup>
+          ) : null}
           {recent.length > 0 ? (
             <CommandGroup heading="Recent Investigations">
               {recent.map((r) => (

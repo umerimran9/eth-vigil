@@ -31,6 +31,7 @@ export interface FeatureSignal {
   feature: string;
   value: number;
   signal_value: number;
+  label?: string;
   description: string;
 }
 

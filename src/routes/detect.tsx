@@ -103,10 +103,10 @@ function Detect() {
   const prefilled = Boolean(search.from || search.to || search.value || search.hash);
 
   const [hash, setHash] = useState(search.hash ?? "");
-  const [fromAddr, setFromAddr] = useState(search.from ?? SAMPLE_PRESETS[0].from);
-  const [toAddr, setToAddr] = useState(search.to ?? SAMPLE_PRESETS[0].to);
-  const [valueEth, setValueEth] = useState(search.value ?? SAMPLE_PRESETS[0].value);
-  const [gasUsed, setGasUsed] = useState(SAMPLE_PRESETS[0].gasUsed);
+  const [fromAddr, setFromAddr] = useState(search.from ?? SAMPLE_PRESETS[0]!.from);
+  const [toAddr, setToAddr] = useState(search.to ?? SAMPLE_PRESETS[0]!.to);
+  const [valueEth, setValueEth] = useState(search.value ?? SAMPLE_PRESETS[0]!.value);
+  const [gasUsed, setGasUsed] = useState(SAMPLE_PRESETS[0]!.gasUsed);
   const [showDetails, setShowDetails] = useState(prefilled && !search.hash);
 
   const [selectedModel, setSelectedModel] = useState<string>(search.model ?? "consensus");
