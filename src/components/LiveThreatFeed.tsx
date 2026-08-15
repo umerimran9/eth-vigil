@@ -10,7 +10,7 @@ export interface ThreatRow {
   risk: number;
   from?: string | undefined;
   to?: string | undefined;
-  value?: number | undefined;
+  value?: string | number | undefined;
   at?: string | undefined;
 }
 
