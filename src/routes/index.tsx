@@ -43,6 +43,9 @@ import {
   short,
 } from "@/components/ui-kit";
 import { BlockchainHero3D } from "@/components/BlockchainHero3D";
+import { NetworkTelemetry } from "@/components/NetworkTelemetry";
+import { LiveThreatFeed } from "@/components/LiveThreatFeed";
+import { useNetworkState } from "@/lib/network-state";
 import {
   MODELS,
   SAMPLE_PRESETS,
@@ -148,6 +151,7 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [showFypGuide, setShowFypGuide] = useState(false);
   const [timeRange, setTimeRange] = useState<"24H" | "7D" | "30D">("24H");
+  const net = useNetworkState();
 
   useEffect(() => {
     let mounted = true;
@@ -237,7 +241,7 @@ function Home() {
           <div className="flex flex-wrap items-center gap-2.5">
             <div className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary/60 px-3 py-1.5 text-xs font-mono text-muted-foreground">
               <span>Block:</span>
-              <span className="font-bold text-foreground">#19,485,021</span>
+              <span className="font-bold text-foreground tabular-nums">{net.blockLabel}</span>
             </div>
 
             <button
@@ -283,96 +287,14 @@ function Home() {
           </div>
         ) : null}
 
-        {/* PRIMARY METRIC ROW (4 High-Value Cards matching reference composition) */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Card 1: Threats Detected */}
-          <div className="card-3d-hover rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Threats Detected
-              </span>
-              <div className="grid h-8 w-8 place-items-center rounded-xl bg-primary/10 text-primary">
-                <ShieldAlert className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between">
-              <div>
-                <div className="text-2xl font-extrabold tracking-tight text-foreground">2,481</div>
-                <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-safe">
-                  <TrendingUp className="h-3 w-3" />
-                  <span>+12.8%</span>
-                  <span className="text-muted-foreground">vs last 24h</span>
-                </div>
-              </div>
-              <Sparkline data={[24, 32, 28, 45, 38, 52, 60]} color="#6366f1" />
-            </div>
-          </div>
+        {/* Chain telemetry replaces generic KPI cards */}
+        <NetworkTelemetry
+          lastScanLabel={recent[0] ? verdictLabel(recent[0].verdict) : undefined}
+          flagged={summary.high}
+        />
 
-          {/* Card 2: Suspicious Wallets */}
-          <div className="card-3d-hover rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Suspicious Wallets
-              </span>
-              <div className="grid h-8 w-8 place-items-center rounded-xl bg-primary/10 text-primary">
-                <Wallet className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between">
-              <div>
-                <div className="text-2xl font-extrabold tracking-tight text-foreground">384</div>
-                <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-safe">
-                  <TrendingUp className="h-3 w-3" />
-                  <span>+8.4%</span>
-                  <span className="text-muted-foreground">under investigation</span>
-                </div>
-              </div>
-              <Sparkline data={[12, 18, 15, 24, 22, 30, 36]} color="#8b5cf6" />
-            </div>
-          </div>
-
-          {/* Card 3: Active Investigations */}
-          <div className="card-3d-hover rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Active Investigations
-              </span>
-              <div className="grid h-8 w-8 place-items-center rounded-xl bg-warn/10 text-warn">
-                <Radar className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between">
-              <div>
-                <div className="text-2xl font-extrabold tracking-tight text-foreground">27</div>
-                <div className="mt-1 text-[11px] font-medium text-warn">
-                  6 requiring immediate review
-                </div>
-              </div>
-              <Sparkline data={[8, 12, 10, 16, 14, 20, 27]} color="#f59e0b" />
-            </div>
-          </div>
-
-          {/* Card 4: High-Risk Transactions */}
-          <div className="card-3d-hover rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                High-Risk Transactions
-              </span>
-              <div className="grid h-8 w-8 place-items-center rounded-xl bg-risk/10 text-risk">
-                <ShieldCheck className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between">
-              <div>
-                <div className="text-2xl font-extrabold tracking-tight text-risk">{summary.high || 142}</div>
-                <div className="mt-1 text-[11px] font-medium text-risk">
-                  19 critical quarantined
-                </div>
-              </div>
-              <Sparkline data={[40, 35, 50, 45, 60, 55, 75]} color="#f43f5e" />
-            </div>
-          </div>
-        </div>
+        {/* Live scan log, chain-native */}
+        <LiveThreatFeed rows={recent} loading={loading} />
 
         {/* MAIN ANALYTICAL AREA (65% Threat Activity Line/Area Chart + 35% Threat Distribution Donut) */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
