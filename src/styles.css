@@ -48,7 +48,7 @@
 
   --color-chart-1: var(--electric);
   --color-chart-2: var(--cyan-accent);
-  --color-chart-3: var(--violet-accent);
+  --color-chart-3: var(--indigo-accent);
   --color-chart-4: var(--safe);
   --color-chart-5: var(--risk);
 }
@@ -56,96 +56,94 @@
 :root {
   --radius: 1.25rem;
 
-  /* Doppler palette */
-  --midnight-plum: #1c1624;
-  --shadow-plum: #2d2734;
-  --bone-white: #f1f0ec;
-  --fog-line: #e5e7eb;
-  --ash-veil: #d0c9c4;
-  --mid-ash: #a5a2a5;
-  --iron-edge: #55505b;
-  --lavender-spark: #b997ff;
-  --signal-green: #00f575;
-  --neon-violet: #6b13f5;
-  --ember-orange: #ff5632;
-  --plasma-pink: #ff9efa;
+  /* Etherscan Dark Palette */
+  --etherscan-navy: #081028;
+  --etherscan-card: #111c38;
+  --etherscan-card-hover: #152446;
+  --etherscan-blue: #0784c3;
+  --etherscan-sky: #00a3ff;
+  --etherscan-cyan: #38bdf8;
+  --etherscan-text-main: #f8fafc;
+  --etherscan-text-muted: #8fa3c0;
+  --etherscan-border-line: rgba(56, 120, 200, 0.18);
+  --etherscan-safe: #00c087;
+  --etherscan-warn: #f59e0b;
+  --etherscan-risk: #ea3943;
 
-  --background: var(--midnight-plum);
-  --foreground: var(--bone-white);
-  --card: var(--shadow-plum);
-  --card-foreground: var(--bone-white);
-  --popover: #241e2c;
-  --popover-foreground: var(--bone-white);
-  --primary: var(--signal-green);
-  --primary-foreground: #000000;
-  --secondary: #322b3a;
-  --secondary-foreground: var(--bone-white);
-  --muted: #2a2431;
-  --muted-foreground: var(--mid-ash);
-  --accent: #372f42;
-  --accent-foreground: var(--bone-white);
-  --destructive: var(--ember-orange);
+  --background: var(--etherscan-navy);
+  --foreground: var(--etherscan-text-main);
+  --card: var(--etherscan-card);
+  --card-foreground: var(--etherscan-text-main);
+  --popover: #0e1832;
+  --popover-foreground: var(--etherscan-text-main);
+  --primary: var(--etherscan-blue);
+  --primary-foreground: #ffffff;
+  --secondary: #162544;
+  --secondary-foreground: var(--etherscan-text-main);
+  --muted: #101c36;
+  --muted-foreground: var(--etherscan-text-muted);
+  --accent: #192b50;
+  --accent-foreground: var(--etherscan-text-main);
+  --destructive: var(--etherscan-risk);
   --destructive-foreground: #ffffff;
-  --border: color-mix(in srgb, var(--fog-line) 14%, transparent);
-  --input: color-mix(in srgb, var(--fog-line) 18%, transparent);
-  --ring: var(--lavender-spark);
+  --border: var(--etherscan-border-line);
+  --input: rgba(16, 28, 56, 0.7);
+  --ring: var(--etherscan-sky);
 
-  --electric: #855aff;
-  --indigo-accent: var(--neon-violet);
-  --violet-accent: var(--plasma-pink);
-  --cyan-accent: var(--lavender-spark);
-  --safe: var(--signal-green);
-  --warn: #ffc46b;
-  --risk: var(--ember-orange);
-  --glass: color-mix(in srgb, var(--fog-line) 6%, transparent);
+  --electric: var(--etherscan-blue);
+  --indigo-accent: #0f4c9c;
+  --violet-accent: var(--etherscan-sky);
+  --cyan-accent: var(--etherscan-cyan);
+  --safe: var(--etherscan-safe);
+  --warn: var(--etherscan-warn);
+  --risk: var(--etherscan-risk);
+  --glass: rgba(17, 28, 56, 0.65);
 
   --gradient-core: radial-gradient(
     circle at 50% 50%,
-    color-mix(in srgb, var(--plasma-pink) 70%, transparent),
-    color-mix(in srgb, var(--neon-violet) 70%, transparent) 48%,
-    transparent 72%
+    rgba(7, 132, 195, 0.32),
+    rgba(8, 16, 40, 0.85) 55%,
+    transparent 75%
   );
   --gradient-aurora: radial-gradient(
       60% 50% at 20% 10%,
-      color-mix(in srgb, var(--neon-violet) 34%, transparent),
+      rgba(7, 132, 195, 0.22),
       transparent 70%
     ),
     radial-gradient(
       50% 45% at 82% 18%,
-      color-mix(in srgb, var(--lavender-spark) 20%, transparent),
+      rgba(0, 163, 255, 0.16),
       transparent 70%
     ),
     radial-gradient(
       55% 50% at 60% 95%,
-      color-mix(in srgb, var(--plasma-pink) 18%, transparent),
+      rgba(2, 132, 199, 0.14),
       transparent 70%
     );
   --grad-brand: linear-gradient(
     135deg,
-    var(--neon-violet) 0%,
-    #855aff 50%,
-    var(--lavender-spark) 100%
+    #0784c3 0%,
+    #0098ea 50%,
+    #00d2ff 100%
   );
   --grad-sheen: linear-gradient(
     120deg,
     transparent 0%,
-    color-mix(in srgb, var(--lavender-spark) 22%, transparent) 50%,
+    rgba(56, 189, 248, 0.25) 50%,
     transparent 100%
   );
 
-  /* Motion. One easing curve and three durations, shared by everything, so
-     hover, focus and press all settle the same way -- mixed easings are what
-     make a UI feel assembled rather than designed. */
+  /* Motion */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-fast: 140ms;
   --dur: 240ms;
   --dur-slow: 420ms;
 
-  --shadow-hover: 0 26px 64px -28px color-mix(in srgb, var(--lavender-spark) 55%, transparent);
-  --shadow-float: 0 24px 70px -24px rgb(0 0 0 / 0.85);
-  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--fog-line) 10%, transparent),
-    0 20px 60px -30px color-mix(in srgb, var(--lavender-spark) 55%, transparent);
+  --shadow-hover: 0 26px 64px -28px rgba(7, 132, 195, 0.45);
+  --shadow-float: 0 24px 70px -24px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 0 1px rgba(56, 189, 248, 0.25),
+    0 20px 60px -30px rgba(7, 132, 195, 0.45);
 }
 
 @layer base {
@@ -175,7 +173,7 @@
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--lavender-spark) 40%, transparent);
+    background: rgba(7, 132, 195, 0.4);
   }
 
   ::-webkit-scrollbar {
@@ -183,8 +181,11 @@
     height: 8px;
   }
   ::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--fog-line) 14%, transparent);
+    background: rgba(56, 120, 200, 0.25);
     border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(7, 132, 195, 0.5);
   }
   ::-webkit-scrollbar-track {
     background: transparent;
@@ -194,26 +195,26 @@
 @utility glass-panel {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--fog-line) 8%, transparent),
-    color-mix(in srgb, var(--shadow-plum) 70%, transparent)
+    rgba(21, 36, 70, 0.75),
+    rgba(14, 24, 48, 0.9)
   );
   backdrop-filter: blur(28px) saturate(140%);
-  border: 1px solid color-mix(in srgb, var(--fog-line) 12%, transparent);
+  border: 1px solid rgba(56, 120, 200, 0.2);
   box-shadow: var(--shadow-float);
 }
 
 @utility glass-soft {
-  background: color-mix(in srgb, var(--fog-line) 5%, transparent);
+  background: rgba(18, 32, 64, 0.55);
   backdrop-filter: blur(18px);
-  border: 1px solid color-mix(in srgb, var(--fog-line) 9%, transparent);
+  border: 1px solid rgba(56, 120, 200, 0.16);
 }
 
 @utility text-gradient {
   background: linear-gradient(
     91deg,
-    var(--bone-white) 4%,
-    #855aff 46%,
-    var(--ember-orange) 96%
+    var(--etherscan-text-main) 4%,
+    var(--etherscan-cyan) 50%,
+    var(--etherscan-blue) 96%
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -223,12 +224,12 @@
 @utility grid-noise {
   background-image: linear-gradient(
       to right,
-      color-mix(in srgb, var(--fog-line) 5%, transparent) 1px,
+      rgba(56, 120, 200, 0.08) 1px,
       transparent 1px
     ),
     linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--fog-line) 5%, transparent) 1px,
+      rgba(56, 120, 200, 0.08) 1px,
       transparent 1px
     );
   background-size: 64px 64px;
@@ -281,9 +282,6 @@
    --------------------------------------------------------------------------- */
 
 @layer base {
-  /* Enumerated rather than `* { transition: all }` -- a universal transition
-     also animates layout and scroll, costing frames and producing exactly the
-     sluggishness it is meant to prevent. */
   a,
   button,
   select,
@@ -320,8 +318,6 @@
   }
 }
 
-/* Rises, border warms toward the accent, shadow deepens -- three properties on
-   one curve so it reads as a single gesture rather than three effects. */
 @utility lift {
   transition:
     transform var(--dur) var(--ease-out),
@@ -330,12 +326,10 @@
   &:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-hover);
-    border-color: color-mix(in srgb, var(--lavender-spark) 34%, transparent);
+    border-color: rgba(56, 189, 248, 0.35);
   }
 }
 
-/* The gradient is oversized and repositioned on hover rather than recoloured,
-   because background-image itself cannot be transitioned. */
 @utility grad-fill {
   background-image: var(--grad-brand);
   background-size: 180% 180%;
@@ -352,8 +346,6 @@
   }
 }
 
-/* A single light sweep. Hero cards and primary CTAs only -- on every surface it
-   stops reading as emphasis and becomes noise. */
 @utility sheen {
   position: relative;
   overflow: hidden;

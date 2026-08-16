@@ -62,8 +62,8 @@ export function AuroraField({ density = 46, showGrid = true }: { density?: numbe
           const by = b.y * h;
           const d = Math.hypot(ax - bx, ay - by);
           if (d < 168) {
-            const alpha = (1 - d / 168) * 0.3;
-            ctx.strokeStyle = `rgba(185,151,255,${alpha})`;
+            const alpha = (1 - d / 168) * 0.28;
+            ctx.strokeStyle = `rgba(56,189,248,${alpha})`;
             ctx.lineWidth = 0.6;
             ctx.beginPath();
             ctx.moveTo(ax, ay);
@@ -77,12 +77,12 @@ export function AuroraField({ density = 46, showGrid = true }: { density?: numbe
         ctx.beginPath();
         ctx.arc(ax, ay, a.r + boost * 2.4, 0, Math.PI * 2);
         ctx.fillStyle = a.hot
-          ? `rgba(0,245,117,${0.55 + boost * 0.4})`
-          : `rgba(185,151,255,${0.32 + boost * 0.5})`;
+          ? `rgba(0,192,135,${0.6 + boost * 0.4})`
+          : `rgba(56,189,248,${0.35 + boost * 0.5})`;
         ctx.fill();
 
         if (boost > 0.02) {
-          ctx.strokeStyle = `rgba(185,151,255,${boost * 0.34})`;
+          ctx.strokeStyle = `rgba(7,132,195,${boost * 0.4})`;
           ctx.lineWidth = 0.7;
           ctx.beginPath();
           ctx.moveTo(ax, ay);
