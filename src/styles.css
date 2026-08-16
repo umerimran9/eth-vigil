@@ -12,8 +12,8 @@
   --radius-xl: 1rem;
   --radius-2xl: 1.25rem;
 
-  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Urbanist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Epilogue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --color-background: var(--background);
@@ -43,7 +43,7 @@
   --color-risk: var(--risk);
 
   --color-chart-1: #8b5cf6;
-  --color-chart-2: #6366f1;
+  --color-chart-2: #c4b5fd;
   --color-chart-3: #10b981;
   --color-chart-4: #f59e0b;
   --color-chart-5: #f43f5e;
@@ -53,30 +53,30 @@
 :root {
   --radius: 0.75rem;
 
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f7f5ff;
+  --foreground: #1b1230;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #1b1230;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #6366f1;
+  --popover-foreground: #1b1230;
+  --primary: #7c3aed;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #eef2ff;
-  --accent-foreground: #4338ca;
+  --secondary: #f1ecfe;
+  --secondary-foreground: #1b1230;
+  --muted: #f1ecfe;
+  --muted-foreground: #6b6486;
+  --accent: #ede7fe;
+  --accent-foreground: #5b21b6;
   --destructive: #f43f5e;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #6366f1;
+  --border: #e5ddfb;
+  --input: #e5ddfb;
+  --ring: #7c3aed;
 
-  --brand: #6366f1;
-  --safe: #10b981;
-  --warn: #f59e0b;
-  --risk: #f43f5e;
+  --brand: #7c3aed;
+  --safe: #22c58b;
+  --warn: #f5a524;
+  --risk: #f4405e;
 
   --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.03);
 }
@@ -84,60 +84,60 @@
 /* Dark Theme - Sophisticated Purple/Indigo Web3 SaaS */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #090a0f;
-    --foreground: #f1f3f9;
-    --card: #12131f;
-    --card-foreground: #f1f3f9;
-    --popover: #12131f;
-    --popover-foreground: #f1f3f9;
-    --primary: #6366f1;
+    --background: #120c22;
+    --foreground: #f3f0ff;
+    --card: #1c1436;
+    --card-foreground: #f3f0ff;
+    --popover: #1c1436;
+    --popover-foreground: #f3f0ff;
+    --primary: #8b5cf6;
     --primary-foreground: #ffffff;
-    --secondary: #1a1b2e;
-    --secondary-foreground: #f1f3f9;
-    --muted: #1a1b2e;
-    --muted-foreground: #9499b3;
-    --accent: #1e1f38;
-    --accent-foreground: #c7d2fe;
+    --secondary: #241a45;
+    --secondary-foreground: #f3f0ff;
+    --muted: #241a45;
+    --muted-foreground: #a49dc2;
+    --accent: #2d2054;
+    --accent-foreground: #ddd0ff;
     --destructive: #f43f5e;
     --destructive-foreground: #ffffff;
-    --border: #212338;
-    --input: #212338;
-    --ring: #6366f1;
+    --border: #2e2352;
+    --input: #2e2352;
+    --ring: #8b5cf6;
 
-    --brand: #6366f1;
-    --safe: #10b981;
-    --warn: #f59e0b;
-    --risk: #f43f5e;
+    --brand: #8b5cf6;
+    --safe: #2ee59d;
+    --warn: #f5a524;
+    --risk: #fb5c78;
 
     --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
   }
 }
 
 :root[data-theme="dark"] {
-  --background: #090a0f;
-  --foreground: #f1f3f9;
-  --card: #12131f;
-  --card-foreground: #f1f3f9;
-  --popover: #12131f;
-  --popover-foreground: #f1f3f9;
-  --primary: #6366f1;
+  --background: #120c22;
+  --foreground: #f3f0ff;
+  --card: #1c1436;
+  --card-foreground: #f3f0ff;
+  --popover: #1c1436;
+  --popover-foreground: #f3f0ff;
+  --primary: #8b5cf6;
   --primary-foreground: #ffffff;
-  --secondary: #1a1b2e;
-  --secondary-foreground: #f1f3f9;
-  --muted: #1a1b2e;
-  --muted-foreground: #9499b3;
-  --accent: #1e1f38;
-  --accent-foreground: #c7d2fe;
+  --secondary: #241a45;
+  --secondary-foreground: #f3f0ff;
+  --muted: #241a45;
+  --muted-foreground: #a49dc2;
+  --accent: #2d2054;
+  --accent-foreground: #ddd0ff;
   --destructive: #f43f5e;
   --destructive-foreground: #ffffff;
-  --border: #212338;
-  --input: #212338;
-  --ring: #6366f1;
+  --border: #2e2352;
+  --input: #2e2352;
+  --ring: #8b5cf6;
 
-  --brand: #6366f1;
-  --safe: #10b981;
-  --warn: #f59e0b;
-  --risk: #f43f5e;
+  --brand: #8b5cf6;
+  --safe: #2ee59d;
+  --warn: #f5a524;
+  --risk: #fb5c78;
 
   --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
 }
@@ -169,13 +169,13 @@ body {
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.4);
-    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.4);
+    border-color: rgba(139, 92, 246, 0.4);
   }
 }
 
 @utility purple-glow {
-  box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 20px -5px rgba(139, 92, 246, 0.3);
 }
 
 @utility flow-step {
@@ -216,4 +216,43 @@ body {
       scroll-behavior: auto !important;
     }
   }
+}
+
+/* Landing surface: deep violet field like the reference hero */
+@utility hero-field {
+  background:
+    radial-gradient(120% 90% at 15% 0%, rgba(139, 92, 246, 0.32), transparent 60%),
+    radial-gradient(110% 80% at 85% 10%, rgba(196, 181, 253, 0.18), transparent 55%),
+    linear-gradient(180deg, #2a1a5e 0%, #1a1038 55%, var(--background) 100%);
+}
+
+@utility pill-nav {
+  background: color-mix(in oklab, #4c1d95 70%, transparent);
+  border: 1px solid rgba(196, 181, 253, 0.22);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 45px -20px rgba(20, 8, 45, 0.9);
+}
+
+@utility nav-pill-item {
+  position: relative;
+  transition: color 0.25s ease, background-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+@utility lift {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.25s ease;
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@utility rise {
+  animation: rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
 }

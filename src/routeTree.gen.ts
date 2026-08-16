@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as BatchRouteImport } from './routes/batch'
 import { Route as CasesRouteImport } from './routes/cases'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DetectRouteImport } from './routes/detect'
 import { Route as MonitorRouteImport } from './routes/monitor'
 import { Route as ReportsRouteImport } from './routes/reports'
@@ -39,6 +40,11 @@ const BatchRoute = BatchRouteImport.update({
 const CasesRoute = CasesRouteImport.update({
   id: '/cases',
   path: '/cases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetectRoute = DetectRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
   '/cases': typeof CasesRoute
+  '/dashboard': typeof DashboardRoute
   '/detect': typeof DetectRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
   '/cases': typeof CasesRoute
+  '/dashboard': typeof DashboardRoute
   '/detect': typeof DetectRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
   '/cases': typeof CasesRoute
+  '/dashboard': typeof DashboardRoute
   '/detect': typeof DetectRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/batch'
     | '/cases'
+    | '/dashboard'
     | '/detect'
     | '/monitor'
     | '/reports'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/batch'
     | '/cases'
+    | '/dashboard'
     | '/detect'
     | '/monitor'
     | '/reports'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/batch'
     | '/cases'
+    | '/dashboard'
     | '/detect'
     | '/monitor'
     | '/reports'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   BatchRoute: typeof BatchRoute
   CasesRoute: typeof CasesRoute
+  DashboardRoute: typeof DashboardRoute
   DetectRoute: typeof DetectRoute
   MonitorRoute: typeof MonitorRoute
   ReportsRoute: typeof ReportsRoute
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/cases'
       fullPath: '/cases'
       preLoaderRoute: typeof CasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/detect': {
@@ -260,6 +280,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   BatchRoute: BatchRoute,
   CasesRoute: CasesRoute,
+  DashboardRoute: DashboardRoute,
   DetectRoute: DetectRoute,
   MonitorRoute: MonitorRoute,
   ReportsRoute: ReportsRoute,
