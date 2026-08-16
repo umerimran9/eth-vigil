@@ -23,7 +23,7 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--brand);
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -41,12 +41,14 @@
   --color-safe: var(--safe);
   --color-warn: var(--warn);
   --color-risk: var(--risk);
+  --color-lavender: var(--lavender);
 
-  --color-chart-1: #8b5cf6;
-  --color-chart-2: #c4b5fd;
-  --color-chart-3: #10b981;
+  --color-chart-1: #b8f04a;
+  --color-chart-2: #c9b6ff;
+  --color-chart-3: #2ee59d;
   --color-chart-4: #f59e0b;
   --color-chart-5: #f43f5e;
+
 }
 
 /* Light Theme - Clean Web3 SaaS */
