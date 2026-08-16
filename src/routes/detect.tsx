@@ -4,17 +4,23 @@ import { useState } from "react";
 import {
   Activity,
   AlertTriangle,
+  ArrowRightLeft,
   CheckCircle2,
   Copy,
   Cpu,
+  ExternalLink,
+  Flame,
   Hash,
   Layers,
   Network,
   PlayCircle,
+  RefreshCw,
+  Search,
   ShieldAlert,
   ShieldCheck,
   Sliders,
   Sparkles,
+  Wallet,
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -97,24 +103,105 @@ interface Result {
   transaction: TransactionMeta | null;
 }
 
-const DEMO = {
-  fromAddr: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
-  toAddr: "0x1111111254fb6c44bac0bed2854e76f90643097d",
-  valueEth: "1.45",
-  gasUsed: "21000",
-};
+const PRESETS = [
+  {
+    name: "Vitalik (1inch Swap)",
+    icon: Wallet,
+    fromAddr: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+    toAddr: "0x1111111254fb6c44bac0bed2854e76f90643097d",
+    valueEth: "1.45",
+    gasUsed: "21000",
+  },
+  {
+    name: "Peer Transfer",
+    icon: ArrowRightLeft,
+    fromAddr: "0x28c6c06298d514db089934071355e5743bf21d60",
+    toAddr: "0x7a250d5630b4cf539739df2c5dacb4c659f2488d",
+    valueEth: "0.50",
+    gasUsed: "21000",
+  },
+  {
+    name: "DeFi Contract Call",
+    icon: Cpu,
+    fromAddr: "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+    toAddr: "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
+    valueEth: "3.20",
+    gasUsed: "145000",
+  },
+  {
+    name: "High-Gas Drain Anomaly",
+    icon: Flame,
+    fromAddr: "0x8894e0a0c962cb723c1976a4421c95949be2d4e3",
+    toAddr: "0x000000000000000000000000000000000000dead",
+    valueEth: "15.00",
+    gasUsed: "820000",
+  },
+];
 
 const copy = (text: string, label: string) => {
   navigator.clipboard?.writeText(text).then(() => toast.success(`${label} copied`));
 };
 
+function formatFeatureName(name: string): { title: string; subtitle: string } {
+  const map: Record<string, { title: string; subtitle: string }> = {
+    erc_20_Name_Lowercase_Count: {
+      title: "ERC-20 Token Name Lowercase Count",
+      subtitle: "Token metadata casing distribution",
+    },
+    erc_20_TokenQuantity: {
+      title: "ERC-20 Token Holding Quantity",
+      subtitle: "Sender wallet balance volume",
+    },
+    erc_721_Name_Uppercase_Ratio: {
+      title: "ERC-721 NFT Name Uppercase Ratio",
+      subtitle: "NFT symbol and contract formatting",
+    },
+    erc_20_Quantity_Is_Int: {
+      title: "ERC-20 Integer Balance Alignment",
+      subtitle: "Whole number token precision flag",
+    },
+    erc_20_Name_Is_Alnum: {
+      title: "ERC-20 Alphanumeric Name Check",
+      subtitle: "Absence of suspicious unicode/symbols",
+    },
+    erc_721_Symbol_Is_Uppercase: {
+      title: "ERC-721 Standard Uppercase Symbol",
+      subtitle: "Compliance with ERC-721 token registry",
+    },
+    erc_20_Log_Quantity: {
+      title: "ERC-20 Log-Scaled Token Balance",
+      subtitle: "Normalized wallet holding magnitude",
+    },
+    erc_721_TokenQuantity: {
+      title: "ERC-721 NFT Portfolio Count",
+      subtitle: "Total NFT assets held by sender",
+    },
+    value: {
+      title: "Transaction Transfer Value",
+      subtitle: "Ether transferred in wei",
+    },
+    gas_used: {
+      title: "Execution Gas Consumption",
+      subtitle: "Computation overhead of call",
+    },
+    effective_gas_price: {
+      title: "Effective Gas Price (Base + Tip)",
+      subtitle: "Priority fee paid for block inclusion",
+    },
+  };
+
+  if (map[name]) return map[name];
+  const formatted = name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return { title: formatted, subtitle: name };
+}
+
 function Detect() {
   const search = Route.useSearch();
 
-  const [fromAddr, setFromAddr] = useState(search.from ?? DEMO.fromAddr);
-  const [toAddr, setToAddr] = useState(search.to ?? DEMO.toAddr);
-  const [valueEth, setValueEth] = useState(search.value ?? DEMO.valueEth);
-  const [gasUsed, setGasUsed] = useState(DEMO.gasUsed);
+  const [fromAddr, setFromAddr] = useState(search.from ?? PRESETS[0].fromAddr);
+  const [toAddr, setToAddr] = useState(search.to ?? PRESETS[0].toAddr);
+  const [valueEth, setValueEth] = useState(search.value ?? PRESETS[0].valueEth);
+  const [gasUsed, setGasUsed] = useState(PRESETS[0].gasUsed);
   const [hash, setHash] = useState("");
 
   const [selectedModel, setSelectedModel] = useState<string>("consensus");
@@ -124,7 +211,7 @@ function Detect() {
   const [viewModel, setViewModel] = useState<string>("consensus");
   const [scoredBy, setScoredBy] = useState<string>("consensus");
 
-  const buildPayload = (o?: Partial<typeof DEMO & { hash: string }>) => {
+  const buildPayload = (o?: Partial<{ fromAddr: string; toAddr: string; valueEth: string; gasUsed: string; hash: string }>) => {
     const v = o?.valueEth ?? valueEth;
     const g = o?.gasUsed ?? gasUsed;
     const valWei = Math.round(parseFloat(v || "0") * 1e18);
@@ -225,19 +312,13 @@ function Detect() {
     setStage(-1);
   };
 
-  const runDemo = () => {
+  const applyPreset = (preset: typeof PRESETS[0]) => {
     setHash("");
-    setFromAddr(DEMO.fromAddr);
-    setToAddr(DEMO.toAddr);
-    setValueEth(DEMO.valueEth);
-    setGasUsed(DEMO.gasUsed);
-    run(
-      {
-        ...buildPayload({ ...DEMO, hash: "" }),
-        model_id: selectedModel === "consensus" ? null : selectedModel.replace(/-/g, "_"),
-      },
-      selectedModel,
-    );
+    setFromAddr(preset.fromAddr);
+    setToAddr(preset.toAddr);
+    setValueEth(preset.valueEth);
+    setGasUsed(preset.gasUsed);
+    toast.info(`Loaded preset: ${preset.name}`);
   };
 
   const busy = stage >= 0;
@@ -247,8 +328,40 @@ function Detect() {
       <PageHeader
         eyebrow="Fraud detection"
         title="Interrogate any transaction."
-        description="Enter transaction parameters to evaluate live on-chain wallet tokens, multi-model consensus, real SHAP feature attributions, and forensic verdicts."
+        description="Configure on-chain transaction parameters to evaluate live Etherscan token enrichment, multi-model consensus, real SHAP feature attributions, and forensic verdicts."
       />
+
+      {/* Quick-Fill Scenario Presets Bar */}
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mr-1">
+          Quick Presets:
+        </span>
+        {PRESETS.map((preset) => {
+          const Icon = preset.icon;
+          const isCurrent =
+            fromAddr === preset.fromAddr &&
+            toAddr === preset.toAddr &&
+            valueEth === preset.valueEth &&
+            gasUsed === preset.gasUsed;
+
+          return (
+            <button
+              key={preset.name}
+              type="button"
+              onClick={() => applyPreset(preset)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] transition",
+                isCurrent
+                  ? "border-cyan/40 bg-cyan/15 text-cyan shadow-[0_0_12px_rgba(6,182,212,0.18)]"
+                  : "border-white/8 bg-white/3 text-muted-foreground hover:border-white/20 hover:bg-white/6 hover:text-foreground",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5 shrink-0 text-cyan-accent" />
+              <span>{preset.name}</span>
+            </button>
+          );
+        })}
+      </div>
 
       {/* Top Section: Dual Balanced Columns with matching height */}
       <div className="grid items-stretch gap-5 lg:grid-cols-2">
@@ -386,12 +499,12 @@ function Detect() {
                 {busy ? "Analysing Transaction…" : "Run detection"}
               </button>
               <button
-                onClick={runDemo}
+                onClick={() => applyPreset(PRESETS[0])}
                 disabled={busy}
-                title="Fill a real sample transaction and analyse it immediately"
+                title="Reset to sample transaction"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl glass-soft px-5 py-3.5 text-sm font-medium transition hover:bg-white/8 disabled:opacity-50"
               >
-                <PlayCircle className="h-4 w-4" /> Try demo
+                <RefreshCw className="h-4 w-4" /> Reset
               </button>
             </div>
 
@@ -450,8 +563,8 @@ function Detect() {
 
       {/* Scored Analytics & Forensic Dashboard */}
       {result ? (
-        <div className="mt-5 space-y-5">
-          <div className="grid items-stretch gap-5 lg:grid-cols-2">
+        <div className="mt-6 space-y-6">
+          <div className="grid items-stretch gap-6 lg:grid-cols-2">
             <ModelConsensusPanel result={result} viewModel={viewModel} />
             <FeatureAttributionPanel shap={result.shapWaterfall} real={result.shapReal} models={result.shapModels} />
           </div>
@@ -482,18 +595,18 @@ function EmptyStatePanel() {
       </div>
 
       <div className="my-auto py-8 text-center">
-        <div className="relative mx-auto h-20 w-20">
-          <div className="absolute inset-0 rounded-full border border-cyan/20 animate-spin" style={{ animationDuration: "12s" }} />
-          <div className="absolute inset-2 rounded-full border border-dashed border-violet/30 animate-spin" style={{ animationDirection: "reverse", animationDuration: "8s" }} />
-          <div className="absolute inset-0 m-auto flex h-12 w-12 items-center justify-center rounded-full glass-panel shadow-[0_0_20px_rgba(6,182,212,0.25)]">
-            <Cpu className="h-6 w-6 text-cyan" />
+        <div className="relative mx-auto h-24 w-24">
+          <div className="absolute inset-0 rounded-full border border-cyan/20 animate-spin" style={{ animationDuration: "14s" }} />
+          <div className="absolute inset-2 rounded-full border border-dashed border-violet/30 animate-spin" style={{ animationDirection: "reverse", animationDuration: "9s" }} />
+          <div className="absolute inset-0 m-auto flex h-14 w-14 items-center justify-center rounded-full glass-panel shadow-[0_0_24px_rgba(6,182,212,0.3)]">
+            <Cpu className="h-7 w-7 text-cyan" />
           </div>
         </div>
         <h3 className="mt-5 text-sm font-semibold text-foreground">
           Ready for Forensic Transaction Analysis
         </h3>
         <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-muted-foreground">
-          Enter transaction parameters on the left and select an AI model or ensemble consensus to execute real-time fraud scoring.
+          Select a quick scenario preset or enter parameters on the left, then trigger real-time AI scoring.
         </p>
       </div>
 
@@ -517,6 +630,56 @@ function EmptyStatePanel() {
         style={{ background: "var(--gradient-core)" }}
       />
     </Panel>
+  );
+}
+
+function CircularRiskGauge({ value, level }: { value: number; level: string }) {
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (Math.min(100, Math.max(0, value)) / 100) * circumference;
+
+  const color =
+    level === "high"
+      ? "var(--risk)"
+      : level === "elevated"
+      ? "var(--warn)"
+      : "var(--safe)";
+
+  return (
+    <div className="relative flex items-center justify-center shrink-0">
+      <svg className="h-24 w-24 -rotate-90 transform" viewBox="0 0 100 100">
+        <circle
+          cx="50"
+          cy="50"
+          r={radius}
+          stroke="rgba(255, 255, 255, 0.08)"
+          strokeWidth="7"
+          fill="none"
+        />
+        <motion.circle
+          cx="50"
+          cy="50"
+          r={radius}
+          stroke={color}
+          strokeWidth="7"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+          strokeLinecap="round"
+          fill="none"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <span className="font-display text-lg font-bold tabular-nums">
+          {value.toFixed(0)}
+          <span className="text-[10px] font-normal text-muted-foreground">%</span>
+        </span>
+        <span className="font-mono text-[7px] uppercase tracking-wider text-muted-foreground">
+          Risk Index
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -583,34 +746,28 @@ function VerdictHero({
           </div>
         ) : null}
 
-        {/* Big Glowing Verdict Title */}
-        <div className="mt-6">
-          <div className={cn("font-display text-4xl font-bold tracking-tight sm:text-5xl", tone)}>
-            {verdictLabel(displayVerdict)}
+        {/* Big Glowing Verdict Title with Radial Risk Gauge */}
+        <div className="mt-5 flex items-center justify-between gap-4">
+          <div>
+            <div className={cn("font-display text-3xl font-bold tracking-tight sm:text-4xl", tone)}>
+              {verdictLabel(displayVerdict)}
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              {isFraud
+                ? "Anomalous contract interaction or drain pattern detected."
+                : "Standard transactional telemetry consistent with legitimate behaviour."}
+            </p>
           </div>
-          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-            {isFraud
-              ? "High likelihood of malicious smart contract drain, phishing topology, or zero-divisor token anomaly."
-              : "Standard transactional telemetry consistent with legitimate on-chain wallet behaviour."}
-          </p>
-        </div>
-
-        {/* Risk Score Progress Bar */}
-        <div className="mt-6 space-y-2">
-          <div className="flex justify-between text-[11px] font-mono">
-            <span className="text-muted-foreground">Fraud Probability Index</span>
-            <span className={cn("font-semibold", tone)}>{displayRisk}%</span>
-          </div>
-          <Meter value={displayRisk} tone={level === "high" ? "risk" : level === "elevated" ? "warn" : "safe"} />
+          <CircularRiskGauge value={displayRisk} level={level} />
         </div>
 
         {/* 3-Column Key Metrics */}
         <div className="mt-5 grid grid-cols-3 gap-3 rounded-2xl border border-white/6 bg-white/2 p-3.5 sm:gap-4 sm:p-4">
           <div>
             <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
-              Fraud Risk
+              Fraud Score
             </div>
-            <div className="mt-1 font-display text-xl font-semibold tabular-nums sm:text-2xl">
+            <div className="mt-1 font-display text-lg font-semibold tabular-nums sm:text-xl">
               {displayRisk}
               <span className="text-xs font-normal text-muted-foreground"> /100</span>
             </div>
@@ -619,7 +776,7 @@ function VerdictHero({
             <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
               {active ? "Models Agree" : "Agreement"}
             </div>
-            <div className="mt-1 font-display text-xl font-semibold tabular-nums sm:text-2xl">
+            <div className="mt-1 font-display text-lg font-semibold tabular-nums sm:text-xl">
               {active ? `${agreeing}/${result.modelScores.length}` : `${(result.confidence * 100).toFixed(0)}%`}
             </div>
           </div>
@@ -627,7 +784,7 @@ function VerdictHero({
             <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
               Latency
             </div>
-            <div className="mt-1 font-display text-xl font-semibold tabular-nums sm:text-2xl">
+            <div className="mt-1 font-display text-lg font-semibold tabular-nums sm:text-xl">
               {result.ms}
               <span className="text-xs font-normal text-muted-foreground"> ms</span>
             </div>
@@ -636,7 +793,7 @@ function VerdictHero({
       </div>
 
       {/* Embedded Action Protocol Tag */}
-      <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/4 p-3.5">
+      <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/4 p-3.5">
         <div className="flex items-center gap-2.5">
           {level === "high" ? (
             <ShieldAlert className="h-4 w-4 text-risk shrink-0" />
@@ -648,7 +805,7 @@ function VerdictHero({
           </span>
         </div>
         <span className="truncate font-mono text-[10px] text-muted-foreground">
-          {result.recommendations[0] ? short(result.recommendations[0], 26) : "Standard Operational Protocol"}
+          {result.recommendations[0] ? short(result.recommendations[0], 28) : "Standard Operational Protocol"}
         </span>
       </div>
 
@@ -663,21 +820,33 @@ function VerdictHero({
 function ModelConsensusPanel({ result, viewModel }: { result: Result; viewModel: string }) {
   const scores = result.modelScores;
   const total = scores.length;
+  const fraudVotes = scores.filter((m) => m.verdict === "FRAUD").length;
+  const clearVotes = total - fraudVotes;
+
   return (
-    <Panel delay={0.1} className="flex h-full flex-col justify-between">
+    <Panel delay={0.1} className="flex h-full flex-col justify-between p-6 sm:p-7">
       <div>
-        <div className="flex items-center justify-between border-b border-white/6 pb-3.5">
-          <h2 className="text-sm font-semibold">Model Consensus — Voting Radar</h2>
-          <span className="font-mono text-[11px] text-muted-foreground">
-            {result.agreedModels} / {result.totalModels} models agree
-          </span>
+        <div className="flex items-center justify-between border-b border-white/6 pb-4">
+          <div>
+            <h2 className="text-sm font-semibold">Model Consensus Voting Map</h2>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">Multi-model agreement topology</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-white/6 px-2.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+              {clearVotes} Clear · {fraudVotes} Fraud
+            </span>
+            <span className="rounded-full bg-cyan/10 px-2.5 py-0.5 font-mono text-[10px] font-medium text-cyan">
+              {(result.confidence * 100).toFixed(0)}% Agreement
+            </span>
+          </div>
         </div>
+
         {total === 0 ? (
           <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
             No per-model scores were returned for this transaction.
           </p>
         ) : (
-          <div className="relative mx-auto mt-6 grid min-h-[320px] w-full max-w-[580px] place-items-center">
+          <div className="relative mx-auto mt-6 grid min-h-[340px] w-full max-w-[580px] place-items-center">
             <svg className="absolute inset-0 h-full w-full" aria-hidden>
               {scores.map((m, i) => {
                 const angle = (i / total) * Math.PI * 2 - Math.PI / 2;
@@ -762,40 +931,58 @@ function FeatureAttributionPanel({
   models: string[];
 }) {
   return (
-    <Panel delay={0.16} className="flex h-full flex-col justify-between">
+    <Panel delay={0.16} className="flex h-full flex-col justify-between p-6 sm:p-7">
       <div>
-        <div className="flex items-center justify-between border-b border-white/6 pb-3.5">
-          <h2 className="text-sm font-semibold">
-            {real ? "SHAP Attribution Waterfall" : "Feature Attribution Waterfall"}
-          </h2>
-          <span className="font-mono text-[10px] text-cyan">
+        <div className="flex items-center justify-between border-b border-white/6 pb-4">
+          <div>
+            <h2 className="text-sm font-semibold">
+              {real ? "SHAP Explainability Waterfall" : "Feature Attribution Waterfall"}
+            </h2>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {real ? `Exact Shapley attributions across ${models.length} models` : "Heuristic importance weights"}
+            </p>
+          </div>
+          <span className="rounded-full bg-cyan/10 px-2.5 py-0.5 font-mono text-[10px] font-medium text-cyan">
             {real ? "Exact Shapley" : "Heuristic"}
           </span>
         </div>
-        <p className="mt-2.5 text-[11px] leading-relaxed text-muted-foreground">
-          {real
-            ? `Exact Shapley values for this transaction, averaged over ${models.length} tree and linear models (${models.join(", ")}).`
-            : "Feature importance weights calculated from observed transaction vector deviation."}
-        </p>
+
         {shap.length > 0 ? (
-          <ul className="mt-4 space-y-3">
-            {shap.map((f) => (
-              <li key={f.feature}>
-                <div className="flex items-baseline justify-between text-xs">
-                  <span className="truncate pr-2 font-mono text-[11px]">{f.feature}</span>
-                  <span className="font-mono text-[11px] tabular-nums text-muted-foreground shrink-0">
-                    {f.shap_value > 0 ? "+" : ""}
-                    {Number(f.shap_value).toFixed(3)}
-                  </span>
-                </div>
-                <div className="mt-1.5">
-                  <Meter value={Math.abs(f.shap_value) * 200} tone={f.shap_value > 0 ? "risk" : "safe"} />
-                </div>
-              </li>
-            ))}
+          <ul className="mt-4 space-y-3.5">
+            {shap.map((f) => {
+              const meta = formatFeatureName(f.feature);
+              const isPositive = f.shap_value > 0;
+
+              return (
+                <li key={f.feature} className="rounded-xl border border-white/4 bg-white/2 p-3 transition hover:bg-white/4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-medium text-foreground">{meta.title}</div>
+                      <div className="text-[10px] text-muted-foreground">{meta.subtitle}</div>
+                    </div>
+                    <span
+                      className={cn(
+                        "font-mono text-xs font-semibold tabular-nums shrink-0",
+                        isPositive ? "text-risk" : "text-safe",
+                      )}
+                    >
+                      {isPositive ? "+" : ""}
+                      {Number(f.shap_value).toFixed(3)}
+                    </span>
+                  </div>
+
+                  <div className="mt-2.5">
+                    <Meter
+                      value={Math.min(100, Math.abs(f.shap_value) * 220)}
+                      tone={isPositive ? "risk" : "safe"}
+                    />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         ) : (
-          <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
             Feature attribution unavailable for this transaction.
           </p>
         )}
@@ -817,35 +1004,40 @@ function TransactionEvidencePanel({ tx }: { tx: TransactionMeta | null }) {
   }
 
   const fields: Array<[string, string, string | null]> = [
-    ["Hash", tx.hash, tx.hash],
-    ["Block", `#${tx.block_number.toLocaleString()}`, null],
-    ["Timestamp", new Date(tx.timestamp * 1000).toLocaleString(), null],
-    ["From Address", tx.from_address, tx.from_address],
-    ["To Address", tx.to_address ?? "Contract creation", tx.to_address],
+    ["Transaction Hash", tx.hash, tx.hash],
+    ["Block Number", `#${tx.block_number.toLocaleString()}`, null],
+    ["Block Timestamp", new Date(tx.timestamp * 1000).toLocaleString(), null],
+    ["From Address (Sender)", tx.from_address, tx.from_address],
+    ["To Address (Contract)", tx.to_address ?? "Contract creation", tx.to_address],
     ["Transfer Value", `${tx.value_eth} ETH`, null],
-    ["Gas Used", tx.gas_used.toLocaleString(), null],
+    ["Gas Consumed", tx.gas_used.toLocaleString(), null],
     ["Effective Gas Price", `${tx.effective_gas_price_gwei} gwei`, null],
   ];
 
   return (
-    <Panel delay={0.22}>
-      <div className="flex items-center justify-between border-b border-white/6 pb-3.5">
-        <h2 className="text-sm font-semibold">Transaction Forensic Evidence</h2>
+    <Panel delay={0.22} className="p-6 sm:p-7">
+      <div className="flex items-center justify-between border-b border-white/6 pb-4">
+        <div>
+          <h2 className="text-sm font-semibold">Transaction Forensic Evidence</h2>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Immutable on-chain parameters evaluated</p>
+        </div>
         <span className="font-mono text-[10px] text-muted-foreground">Audit Record</span>
       </div>
-      <dl className="mt-5 grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+
+      <dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {fields.map(([label, value, copyValue]) => (
-          <div key={label} className="rounded-xl border border-white/4 bg-white/2 p-3">
+          <div key={label} className="rounded-2xl border border-white/6 bg-white/2 p-3.5">
             <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
               {label}
             </dt>
-            <dd className="mt-1 flex items-center justify-between gap-1.5 break-all font-mono text-xs text-foreground">
+            <dd className="mt-1.5 flex items-center justify-between gap-2 break-all font-mono text-xs text-foreground">
               <span className="truncate">{value}</span>
               {copyValue ? (
                 <button
                   onClick={() => copy(copyValue, label)}
                   className="shrink-0 text-muted-foreground/60 transition hover:text-cyan"
                   aria-label={`Copy ${label}`}
+                  title="Copy to clipboard"
                 >
                   <Copy className="h-3.5 w-3.5" />
                 </button>
@@ -861,9 +1053,12 @@ function TransactionEvidencePanel({ tx }: { tx: TransactionMeta | null }) {
 function RecommendationPanel({ result }: { result: Result }) {
   const level = levelFromVerdict(result.verdict, result.risk);
   return (
-    <Panel delay={0.28}>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/6 pb-3.5">
-        <h2 className="text-sm font-semibold">SOC Incident Guidance & Protocol Action</h2>
+    <Panel delay={0.28} className="p-6 sm:p-7">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/6 pb-4">
+        <div>
+          <h2 className="text-sm font-semibold">SOC Incident Guidance & Security Protocol</h2>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Automated threat response playbook actions</p>
+        </div>
         <div className="flex items-center gap-2">
           <RiskBadge level={level} />
           <span className="rounded-full glass-soft px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em]">
@@ -871,14 +1066,15 @@ function RecommendationPanel({ result }: { result: Result }) {
           </span>
         </div>
       </div>
-      <div className="mt-5 space-y-2.5 text-sm leading-relaxed text-muted-foreground">
+
+      <div className="mt-5 space-y-3 text-sm leading-relaxed text-muted-foreground">
         {result.recommendations.length > 0 ? (
           result.recommendations.map((rec, i) => (
-            <div key={i} className="flex items-start gap-3 rounded-xl border border-white/4 bg-white/2 p-3">
-              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-cyan/15 text-[10px] font-semibold text-cyan">
+            <div key={i} className="flex items-start gap-3.5 rounded-2xl border border-white/4 bg-white/2 p-4">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan/15 text-xs font-semibold text-cyan">
                 {i + 1}
               </span>
-              <p className="text-xs text-foreground/90">{rec}</p>
+              <p className="text-xs text-foreground/90 leading-relaxed">{rec}</p>
             </div>
           ))
         ) : (
