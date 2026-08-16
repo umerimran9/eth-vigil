@@ -101,26 +101,19 @@ const copy = (text: string, label: string) => {
 
 function Detect() {
   const search = Route.useSearch();
-  const prefilled = Boolean(search.from || search.to || search.value);
 
-  const [mode, setMode] = useState<"hash" | "manual">(prefilled ? "manual" : "hash");
-  const [hash, setHash] = useState("");
   const [fromAddr, setFromAddr] = useState(search.from ?? DEMO.fromAddr);
   const [toAddr, setToAddr] = useState(search.to ?? DEMO.toAddr);
   const [valueEth, setValueEth] = useState(search.value ?? DEMO.valueEth);
   const [gasUsed, setGasUsed] = useState(DEMO.gasUsed);
+  const [hash, setHash] = useState("");
 
   const [selectedModel, setSelectedModel] = useState<string>("consensus");
   const [stage, setStage] = useState(-1);
   const [result, setResult] = useState<Result | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [viewModel, setViewModel] = useState<string>("consensus");
-  // The model the last request was scored through. Distinct from viewModel so
-  // the chips can show a pending selection while the re-run is in flight.
   const [scoredBy, setScoredBy] = useState<string>("consensus");
-  // The on-chain payload a pasted hash resolved to, so the UI can show the
-  // real values it is about to score rather than the form's defaults.
-  const [resolved, setResolved] = useState<any | null>(null);
 
   const buildPayload = (o?: Partial<typeof DEMO & { hash: string }>) => {
     const v = o?.valueEth ?? valueEth;
@@ -128,7 +121,7 @@ function Detect() {
     const valWei = Math.round(parseFloat(v || "0") * 1e18);
     const gUsed = parseInt(g || "21000", 10);
     return {
-      hash: o?.hash ?? hash ?? "0x" + "0".repeat(64),
+      hash: o?.hash ?? (hash.trim() || "0x" + "0".repeat(64)),
       from_address: o?.fromAddr ?? fromAddr ?? "0x0000000000000000000000000000000000000000",
       to_address: o?.toAddr ?? toAddr ?? "0x0000000000000000000000000000000000000000",
       value: valWei,
@@ -141,89 +134,29 @@ function Detect() {
   };
 
   /**
-   * Turn a pasted hash into the transaction's real on-chain values.
-   *
-   * Without this the hash was a label only: scoring ran on whatever from/to/
-   * value/gas the form held, which in hash mode were the demo defaults -- so
-   * every hash returned an identical verdict. Returns null and surfaces the
-   * reason if the hash cannot be resolved, rather than silently scoring the
-   * defaults under the user's hash.
-   */
-  const resolveHash = async (h: string) => {
-    const { ok, data, error } = await apiFetch<any>(
-      `/api/v1/transactions/resolve/${h.trim()}`,
-    );
-    if (!ok || !data?.data) {
-      setErrorMsg(error || `Could not resolve ${h}.`);
-      return null;
-    }
-    const t = data.data;
-    setFromAddr(t.from_address);
-    setToAddr(t.to_address ?? "");
-    setValueEth(String(Number(t.value) / 1e18));
-    setGasUsed(String(t.gas_used));
-    setResolved(t);
-    return {
-      hash: t.hash,
-      from_address: t.from_address,
-      to_address: t.to_address ?? "0x0000000000000000000000000000000000000000",
-      value: t.value,
-      gas: t.gas,
-      gas_used: t.gas_used,
-      effective_gas_price: t.effective_gas_price,
-      cumulative_gas_used: t.cumulative_gas_used,
-      nonce: t.nonce,
-      input_data: t.input_data,
-    };
-  };
-
-  /**
    * Re-score the transaction currently on screen through one named model.
-   *
-   * The chips used to be a viewer -- they re-displayed a probability already in
-   * the response. Selecting a model now sends model_id, so the verdict, the
-   * recommended action and the SHAP attribution all reflect that model rather
-   * than the ensemble.
    */
   const selectModel = async (id: string) => {
     setViewModel(id);
     setSelectedModel(id);
     if (!result) return;
-    const base = resolved ?? buildPayload();
+    const base = buildPayload();
     await run({ ...base, model_id: id === "consensus" ? null : id.replace(/-/g, "_") }, id);
   };
 
   const run = async (payload?: Record<string, unknown>, asModel = selectedModel) => {
     setResult(null);
     setErrorMsg(null);
-    // Only cleared for a fresh run. A model re-score reuses the resolved
-    // payload, so wiping it here would drop back to the form values.
-    if (!payload) setResolved(null);
 
-    // Hash mode resolves against chain first. If that fails we stop rather than
-    // quietly scoring the form defaults under the user's hash.
     if (!payload) {
-      if (mode === "hash") {
-        if (!hash.trim()) {
-          setErrorMsg("Paste a transaction hash first.");
-          return;
-        }
-        setStage(0);
-        const r = await resolveHash(hash);
-        if (!r) {
-          setStage(-1);
-          return;
-        }
-        payload = {
-          ...r,
-          model_id: asModel === "consensus" ? null : asModel.replace(/-/g, "_"),
-        };
-      } else {
-        payload = {
-          ...buildPayload(),
-          model_id: asModel === "consensus" ? null : asModel.replace(/-/g, "_"),
-        };
+      if (!fromAddr.trim()) {
+        setErrorMsg("From address is required for transaction analysis.");
+        return;
       }
+      payload = {
+        ...buildPayload(),
+        model_id: asModel === "consensus" ? null : asModel.replace(/-/g, "_"),
+      };
     } else if (!("model_id" in payload)) {
       payload = {
         ...payload,
@@ -233,10 +166,7 @@ function Detect() {
     setStage(0);
     const startTime = performance.now();
 
-    // Advance through the "in-flight" stages on a timer -- purely a "this is
-    // probably happening now" indicator. None of these render as complete
-    // (green) while showing; only setStage(STAGES.length) below, gated on a
-    // real successful response, does that.
+    // Advance through the "in-flight" stages on a timer
     const timers: number[] = [];
     for (let i = 1; i < STAGES.length; i++) {
       timers.push(window.setTimeout(() => setStage(i), i * 480));
@@ -267,14 +197,6 @@ function Detect() {
         totalModels: a.total_models,
         ms: Number((endTime - startTime).toFixed(1)),
         recommendations: d.recommendations || [],
-        // The backend sends `feature_signals`, not `shap_waterfall` -- the latter
-        // key exists nowhere in the response, so this always fell back to [] and
-        // the attribution panel rendered its empty state on every run. Each entry
-        // is {feature, label, value, signal_value, direction}.
-        // Real Shapley values when the backend could compute them (exact, tree
-        // and linear models), otherwise the heuristic importance table. The two
-        // are different quantities, so the panel is told which it is showing
-        // rather than presenting a fixed weight table as SHAP.
         shapWaterfall: d.explainability?.shap?.available
           ? d.explainability.shap.features.map((f: any) => ({
               feature: f.feature,
@@ -299,7 +221,6 @@ function Detect() {
   };
 
   const runDemo = () => {
-    setMode("manual");
     setHash("");
     setFromAddr(DEMO.fromAddr);
     setToAddr(DEMO.toAddr);
@@ -321,91 +242,59 @@ function Detect() {
       <PageHeader
         eyebrow="Fraud detection"
         title="Interrogate any transaction."
-        description="Paste a hash and Aegis retrieves the on-chain payload itself, or enter engineered features directly. Every verdict ships with model consensus, feature attribution and a recommended action."
+        description="Enter transaction parameters to evaluate live on-chain wallet tokens, multi-model consensus, real SHAP feature attributions, and forensic verdicts."
       />
-
-      {prefilled ? (
-        <div className="mb-4 rounded-full glass-soft px-4 py-2 text-xs text-muted-foreground">
-          Prefilled from a history entry — review the fields below and run detection.
-        </div>
-      ) : null}
-
-      <div className="mb-4 inline-flex rounded-full glass-soft p-1">
-        {(["hash", "manual"] as const).map((m) => (
-          <button
-            key={m}
-            onClick={() => setMode(m)}
-            className="relative rounded-full px-5 py-2 text-sm capitalize"
-          >
-            {mode === m ? (
-              <motion.span
-                layoutId="detect-tab"
-                className="absolute inset-0 rounded-full bg-white/10"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
-            ) : null}
-            <span className="relative inline-flex items-center gap-2">
-              {m === "hash" ? <Hash className="h-3.5 w-3.5" /> : <Sliders className="h-3.5 w-3.5" />}
-              {m === "hash" ? "Transaction hash" : "Manual features"}
-            </span>
-          </button>
-        ))}
-      </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         <Panel>
-          {mode === "hash" ? (
+          <div className="mb-4 flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground flex items-center gap-1.5">
+              <Sliders className="h-3.5 w-3.5 text-cyan-accent" />
+              Transaction Parameters
+            </span>
+            <span className="text-[11px] text-muted-foreground font-mono">
+              Live Etherscan token enrichment
+            </span>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
-                Transaction hash
-              </label>
+              <label className="text-[11px] text-muted-foreground">From Address (Sender)</label>
               <input
-                value={hash}
-                onChange={(e) => setHash(e.target.value)}
+                value={fromAddr}
+                onChange={(e) => setFromAddr(e.target.value)}
                 placeholder="0x…"
-                className="mt-3 w-full rounded-2xl border border-white/10 bg-white/4 px-4 py-3.5 font-mono text-xs outline-none transition focus:border-cyan/40"
+                className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
               />
-              <p className="mt-3 text-[11px] text-muted-foreground">
-                Fetched from Ethereum mainnet, then scored on its real from/to/value/gas and the
-                sending wallet's token history.
-              </p>
             </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="text-[11px] text-muted-foreground">From Address</label>
-                <input
-                  value={fromAddr}
-                  onChange={(e) => setFromAddr(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] text-muted-foreground">To Address / Contract</label>
-                <input
-                  value={toAddr}
-                  onChange={(e) => setToAddr(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] text-muted-foreground">Transfer Value (ETH)</label>
-                <input
-                  value={valueEth}
-                  onChange={(e) => setValueEth(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] text-muted-foreground">Gas Used</label>
-                <input
-                  value={gasUsed}
-                  onChange={(e) => setGasUsed(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
-                />
-              </div>
+            <div>
+              <label className="text-[11px] text-muted-foreground">To Address / Contract</label>
+              <input
+                value={toAddr}
+                onChange={(e) => setToAddr(e.target.value)}
+                placeholder="0x…"
+                className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
+              />
             </div>
-          )}
+            <div>
+              <label className="text-[11px] text-muted-foreground">Transfer Value (ETH)</label>
+              <input
+                value={valueEth}
+                onChange={(e) => setValueEth(e.target.value)}
+                placeholder="1.45"
+                className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-muted-foreground">Gas Used</label>
+              <input
+                value={gasUsed}
+                onChange={(e) => setGasUsed(e.target.value)}
+                placeholder="21000"
+                className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
+              />
+            </div>
+          </div>
 
           {/* Target Model Selector */}
           <div className="mt-6">
