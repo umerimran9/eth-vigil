@@ -55,7 +55,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "NETWORK",
     items: [
-      { to: "/", label: "Overview", icon: LayoutDashboard },
+      { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
       { to: "/monitor", label: "Live Stream", icon: Activity, badge: "Live" },
     ],
   },
@@ -167,16 +167,23 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                       to={item.to}
                       onClick={onNavigate}
                       className={cn(
-                        "group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-all duration-150",
+                        "group relative flex items-center justify-between overflow-hidden rounded-xl px-3 py-2 text-xs font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:translate-x-0.5",
                         active
                           ? "bg-primary/15 text-primary font-semibold shadow-xs"
                           : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
                       )}
                     >
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-primary transition-all duration-300",
+                          active ? "opacity-100" : "opacity-0 group-hover:opacity-60",
+                        )}
+                      />
                       <div className="flex items-center gap-2.5">
                         <item.icon
                           className={cn(
-                            "h-4 w-4 shrink-0 transition-colors",
+                            "h-4 w-4 shrink-0 transition-all duration-300 group-hover:scale-110",
                             active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
                           )}
                         />
