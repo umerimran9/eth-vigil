@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, Blocks, Radio, Terminal, SearchCode, AlertTriangle } from "lucide-react";
 import { ModuleShell, PageHeader, Panel, RiskBadge, StatTile, short } from "@/components/ui-kit";
 import { levelFromVerdict, MODELS, type RiskLevel, type Txn } from "@/lib/platform-data";
+import { WS_BASE_URL } from "@/lib/api";
 
 export const Route = createFileRoute("/monitor")({
   head: () => ({
@@ -72,7 +73,7 @@ function Monitor() {
     };
 
     try {
-      ws = new WebSocket("ws://localhost:8000/api/v1/stream/live");
+      ws = new WebSocket(`${WS_BASE_URL}/api/v1/stream/live`);
 
       ws.onopen = () => {
         setWsStatus("connected");

@@ -1,4 +1,11 @@
-export const API_BASE_URL = "http://localhost:8000";
+// Configurable so the app can point at something other than a laptop.
+export const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:8000";
+
+// Derived, never declared separately. Live Monitor used to open a literal
+// ws://localhost:8000 while SystemStatus derived its own from API_BASE_URL --
+// so the two disagreed the moment the API moved, and Monitor silently kept
+// talking to localhost. Replacing only the leading scheme keeps https -> wss.
+export const WS_BASE_URL = API_BASE_URL.replace(/^http/, "ws");
 
 export interface ApiResult<T> {
   ok: boolean;

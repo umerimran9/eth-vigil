@@ -162,19 +162,24 @@ function ModelPage() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Panel delay={0.35}>
-          <h2 className="text-sm font-semibold">SHAP behaviour</h2>
+          <h2 className="text-sm font-semibold">Feature importance</h2>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Mean |SHAP| across the ensemble, templated-excluded decile 9. Ensemble-wide, not
+            specific to {model.name}.
+          </p>
           <ul className="mt-5 space-y-3.5">
             {FEATURES.slice(0, 6).map((f) => (
               <li key={f.key}>
                 <div className="flex justify-between text-xs">
                   <span>{f.label}</span>
                   <span className="font-mono tabular-nums text-muted-foreground">
-                    {f.shap > 0 ? "+" : ""}
-                    {f.shap.toFixed(2)}
+                    {f.importance.toFixed(2)}
                   </span>
                 </div>
                 <div className="mt-2">
-                  <Meter value={Math.abs(f.shap) * 190} tone={f.shap > 0 ? "risk" : "safe"} />
+                  {/* Magnitude only. The old bar coloured by SHAP sign, but a
+                      mean absolute value has no direction to encode. */}
+                  <Meter value={f.importance * 100} tone="electric" />
                 </div>
               </li>
             ))}

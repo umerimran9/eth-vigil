@@ -25,7 +25,7 @@ export function Panel({
             style: { transformPerspective: 1200 },
           }
         : {})}
-      className={cn("rounded-3xl glass-panel p-6", className)}
+      className={cn("rounded-3xl glass-panel lift p-6", className)}
     >
       {children}
     </motion.section>
@@ -114,8 +114,7 @@ export function StatTile({
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -4 }}
-      className="relative overflow-hidden rounded-3xl glass-soft p-5"
+      className="relative overflow-hidden rounded-3xl glass-soft lift p-5"
     >
       <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
         {label}

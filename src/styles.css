@@ -120,6 +120,29 @@
       color-mix(in srgb, var(--plasma-pink) 18%, transparent),
       transparent 70%
     );
+  --grad-brand: linear-gradient(
+    135deg,
+    var(--neon-violet) 0%,
+    #855aff 50%,
+    var(--lavender-spark) 100%
+  );
+  --grad-sheen: linear-gradient(
+    120deg,
+    transparent 0%,
+    color-mix(in srgb, var(--lavender-spark) 22%, transparent) 50%,
+    transparent 100%
+  );
+
+  /* Motion. One easing curve and three durations, shared by everything, so
+     hover, focus and press all settle the same way -- mixed easings are what
+     make a UI feel assembled rather than designed. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;
+
+  --shadow-hover: 0 26px 64px -28px color-mix(in srgb, var(--lavender-spark) 55%, transparent);
   --shadow-float: 0 24px 70px -24px rgb(0 0 0 / 0.85);
   --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--fog-line) 10%, transparent),
     0 20px 60px -30px color-mix(in srgb, var(--lavender-spark) 55%, transparent);
@@ -251,4 +274,99 @@
 }
 @utility animate-float-slow {
   animation: float-slow 7s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion
+   --------------------------------------------------------------------------- */
+
+@layer base {
+  /* Enumerated rather than `* { transition: all }` -- a universal transition
+     also animates layout and scroll, costing frames and producing exactly the
+     sluggishness it is meant to prevent. */
+  a,
+  button,
+  select,
+  summary,
+  [role="button"],
+  [role="tab"],
+  input,
+  textarea {
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      background-color var(--dur) var(--ease-out),
+      border-color var(--dur) var(--ease-out),
+      box-shadow var(--dur) var(--ease-out),
+      opacity var(--dur-fast) var(--ease-out),
+      transform var(--dur) var(--ease-out);
+  }
+
+  a:active,
+  button:active,
+  [role="button"]:active {
+    transform: translateY(1px) scale(0.995);
+    transition-duration: var(--dur-fast);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Rises, border warms toward the accent, shadow deepens -- three properties on
+   one curve so it reads as a single gesture rather than three effects. */
+@utility lift {
+  transition:
+    transform var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out);
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    border-color: color-mix(in srgb, var(--lavender-spark) 34%, transparent);
+  }
+}
+
+/* The gradient is oversized and repositioned on hover rather than recoloured,
+   because background-image itself cannot be transitioned. */
+@utility grad-fill {
+  background-image: var(--grad-brand);
+  background-size: 180% 180%;
+  background-position: 0% 50%;
+  color: #ffffff;
+  transition:
+    background-position var(--dur-slow) var(--ease-in-out),
+    box-shadow var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+  &:hover {
+    background-position: 100% 50%;
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-1px);
+  }
+}
+
+/* A single light sweep. Hero cards and primary CTAs only -- on every surface it
+   stops reading as emphasis and becomes noise. */
+@utility sheen {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--grad-sheen);
+    transform: translateX(-120%);
+    transition: transform var(--dur-slow) var(--ease-in-out);
+    pointer-events: none;
+  }
+  &:hover::after {
+    transform: translateX(120%);
+  }
 }

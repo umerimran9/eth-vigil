@@ -80,6 +80,9 @@ interface Result {
   ms: number;
   recommendations: string[];
   shapWaterfall: Array<{ feature: string; shap_value: number; value: number }>;
+  /** true when the values are exact Shapley, false when the heuristic table. */
+  shapReal: boolean;
+  shapModels: string[];
   featuresDefaulted: boolean;
   modelScores: ModelScore[];
   transaction: TransactionMeta | null;
@@ -111,6 +114,12 @@ function Detect() {
   const [result, setResult] = useState<Result | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [viewModel, setViewModel] = useState<string>("consensus");
+  // The model the last request was scored through. Distinct from viewModel so
+  // the chips can show a pending selection while the re-run is in flight.
+  const [scoredBy, setScoredBy] = useState<string>("consensus");
+  // The on-chain payload a pasted hash resolved to, so the UI can show the
+  // real values it is about to score rather than the form's defaults.
+  const [resolved, setResolved] = useState<any | null>(null);
 
   const buildPayload = (o?: Partial<typeof DEMO & { hash: string }>) => {
     const v = o?.valueEth ?? valueEth;
@@ -130,10 +139,84 @@ function Detect() {
     };
   };
 
-  const run = async (payload = buildPayload()) => {
+  /**
+   * Turn a pasted hash into the transaction's real on-chain values.
+   *
+   * Without this the hash was a label only: scoring ran on whatever from/to/
+   * value/gas the form held, which in hash mode were the demo defaults -- so
+   * every hash returned an identical verdict. Returns null and surfaces the
+   * reason if the hash cannot be resolved, rather than silently scoring the
+   * defaults under the user's hash.
+   */
+  const resolveHash = async (h: string) => {
+    const { ok, data, error } = await apiFetch<any>(
+      `/api/v1/transactions/resolve/${h.trim()}`,
+    );
+    if (!ok || !data?.data) {
+      setErrorMsg(error || `Could not resolve ${h}.`);
+      return null;
+    }
+    const t = data.data;
+    setFromAddr(t.from_address);
+    setToAddr(t.to_address ?? "");
+    setValueEth(String(Number(t.value) / 1e18));
+    setGasUsed(String(t.gas_used));
+    setResolved(t);
+    return {
+      hash: t.hash,
+      from_address: t.from_address,
+      to_address: t.to_address ?? "0x0000000000000000000000000000000000000000",
+      value: t.value,
+      gas: t.gas,
+      gas_used: t.gas_used,
+      effective_gas_price: t.effective_gas_price,
+      cumulative_gas_used: t.cumulative_gas_used,
+      nonce: t.nonce,
+      input_data: t.input_data,
+    };
+  };
+
+  /**
+   * Re-score the transaction currently on screen through one named model.
+   *
+   * The chips used to be a viewer -- they re-displayed a probability already in
+   * the response. Selecting a model now sends model_id, so the verdict, the
+   * recommended action and the SHAP attribution all reflect that model rather
+   * than the ensemble.
+   */
+  const selectModel = async (id: string) => {
+    setViewModel(id);
+    if (!result) return;
+    const base = resolved ?? buildPayload();
+    await run({ ...base, model_id: id === "consensus" ? null : id.replace(/-/g, "_") }, id);
+  };
+
+  const run = async (payload?: Record<string, unknown>, asModel = "consensus") => {
     setResult(null);
     setErrorMsg(null);
-    setViewModel("consensus");
+    // Only cleared for a fresh run. A model re-score reuses the resolved
+    // payload, so wiping it here would drop back to the form values.
+    if (!payload) setResolved(null);
+
+    // Hash mode resolves against chain first. If that fails we stop rather than
+    // quietly scoring the form defaults under the user's hash.
+    if (!payload) {
+      if (mode === "hash") {
+        if (!hash.trim()) {
+          setErrorMsg("Paste a transaction hash first.");
+          return;
+        }
+        setStage(0);
+        const r = await resolveHash(hash);
+        if (!r) {
+          setStage(-1);
+          return;
+        }
+        payload = r;
+      } else {
+        payload = buildPayload();
+      }
+    }
     setStage(0);
     const startTime = performance.now();
 
@@ -160,6 +243,7 @@ function Detect() {
       await new Promise((r) => setTimeout(r, 300));
       const d = data.data;
       const a = d.assessment;
+      setScoredBy(asModel);
       setResult({
         verdict: a.verdict,
         action: a.action,
@@ -169,7 +253,27 @@ function Detect() {
         totalModels: a.total_models,
         ms: Number((endTime - startTime).toFixed(1)),
         recommendations: d.recommendations || [],
-        shapWaterfall: d.explainability?.shap_waterfall || [],
+        // The backend sends `feature_signals`, not `shap_waterfall` -- the latter
+        // key exists nowhere in the response, so this always fell back to [] and
+        // the attribution panel rendered its empty state on every run. Each entry
+        // is {feature, label, value, signal_value, direction}.
+        // Real Shapley values when the backend could compute them (exact, tree
+        // and linear models), otherwise the heuristic importance table. The two
+        // are different quantities, so the panel is told which it is showing
+        // rather than presenting a fixed weight table as SHAP.
+        shapWaterfall: d.explainability?.shap?.available
+          ? d.explainability.shap.features.map((f: any) => ({
+              feature: f.feature,
+              shap_value: f.shap_value,
+              value: f.value,
+            }))
+          : (d.explainability?.feature_signals ?? []).map((f: any) => ({
+              feature: f.label || f.feature,
+              shap_value: f.signal_value,
+              value: f.value,
+            })),
+        shapReal: Boolean(d.explainability?.shap?.available),
+        shapModels: d.explainability?.shap?.models ?? [],
         featuresDefaulted: Boolean(d.features_defaulted),
         modelScores: d.model_scores || [],
         transaction: d.transaction || null,
@@ -242,8 +346,8 @@ function Detect() {
                 className="mt-3 w-full rounded-2xl border border-white/10 bg-white/4 px-4 py-3.5 font-mono text-xs outline-none transition focus:border-cyan/40"
               />
               <p className="mt-3 text-[11px] text-muted-foreground">
-                The hash is carried through as this transaction's identifier; scoring still runs on
-                the from/to/value/gas below.
+                Fetched from Ethereum mainnet, then scored on its real from/to/value/gas and the
+                sending wallet's token history.
               </p>
             </div>
           ) : (
@@ -287,7 +391,7 @@ function Detect() {
             <button
               onClick={() => run()}
               disabled={busy}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-foreground px-6 py-3.5 text-sm font-medium text-background transition hover:scale-[1.01] disabled:opacity-50"
+              className="grad-fill sheen inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-medium disabled:opacity-50"
             >
               <Sparkles className="h-4 w-4" />
               {busy ? "Analysing…" : "Run detection"}
@@ -339,7 +443,7 @@ function Detect() {
                   Scored on gas/value features — token data unavailable.
                 </div>
               ) : null}
-              <VerdictHero result={result} viewModel={viewModel} onSelectModel={setViewModel} />
+              <VerdictHero result={result} viewModel={viewModel} onSelectModel={selectModel} />
             </>
           ) : errorMsg ? (
             <Panel delay={0.1} className="border-risk/40 bg-risk/5 p-6 text-center">
@@ -364,7 +468,7 @@ function Detect() {
         <div className="mt-4 space-y-4">
           <div className="grid gap-4 lg:grid-cols-2">
             <ModelConsensusPanel result={result} viewModel={viewModel} />
-            <FeatureAttributionPanel shap={result.shapWaterfall} />
+            <FeatureAttributionPanel shap={result.shapWaterfall} real={result.shapReal} models={result.shapModels} />
           </div>
           <TransactionEvidencePanel tx={result.transaction} />
           <RecommendationPanel result={result} />
@@ -562,10 +666,29 @@ function ModelConsensusPanel({ result, viewModel }: { result: Result; viewModel:
   );
 }
 
-function FeatureAttributionPanel({ shap }: { shap: Result["shapWaterfall"] }) {
+function FeatureAttributionPanel({
+  shap,
+  real,
+  models,
+}: {
+  shap: Result["shapWaterfall"];
+  real: boolean;
+  models: string[];
+}) {
   return (
     <Panel delay={0.16}>
-      <h2 className="text-sm font-semibold">Feature attribution — why</h2>
+      <h2 className="text-sm font-semibold">
+        {real ? "SHAP attribution — why" : "Feature attribution — why"}
+      </h2>
+      {/* Names the method rather than leaving the reader to assume. The two are
+          different quantities: exact Shapley values computed for this specific
+          transaction, versus a fixed importance table whose magnitudes are the
+          same on every run. */}
+      <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+        {real
+          ? `Exact Shapley values for this transaction, averaged over ${models.length} tree and linear models (${models.join(", ")}). The three neural models are excluded — their explainers are approximations and too slow to run per request.`
+          : "Heuristic importance table, not Shapley values — the same weights on every transaction, signed by the observed value."}
+      </p>
       {shap.length > 0 ? (
         <ul className="mt-5 space-y-3.5">
           {shap.map((f) => (

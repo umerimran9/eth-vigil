@@ -4,8 +4,9 @@ import { useState } from "react";
 import { UploadCloud, FileSpreadsheet, Play, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { ModuleShell, PageHeader, Panel, RiskBadge, StatTile } from "@/components/ui-kit";
-import { levelFromVerdict } from "@/lib/platform-data";
+import { levelFromVerdict, MODELS } from "@/lib/platform-data";
 import { apiFetch } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/batch")({
   head: () => ({
@@ -42,6 +43,8 @@ interface BatchSummary {
 const DEMO_CSV_URL = "/demo/demo_batch_sample.csv";
 
 function Batch() {
+  // Which model scores the batch. "consensus" keeps the ensemble mean.
+  const [batchModel, setBatchModel] = useState<string>("consensus");
   const [rows, setRows] = useState<Row[]>([]);
   const [summary, setSummary] = useState<BatchSummary | null>(null);
   const [progress, setProgress] = useState(0);
@@ -60,7 +63,8 @@ function Batch() {
 
     const formData = new FormData();
     formData.append("file", fileObject);
-    const { ok, data, error } = await apiFetch<any>("/api/v1/batch/upload", {
+    const { ok, data, error } = await apiFetch<any>(
+      `/api/v1/batch/upload${batchModel === "consensus" ? "" : `?model_id=${batchModel.replace(/-/g, "_")}`}`, {
       method: "POST",
       body: formData,
     });
@@ -132,7 +136,39 @@ function Batch() {
                 <span className="font-mono">{file}</span>
               </div>
             ) : null}
-            <div className="mt-5 flex gap-2">
+
+            {/* Which model scores the batch. Consensus averages the ensemble;
+                picking one sends model_id so every row is scored through that
+                model alone, at its own tuned threshold. */}
+            <div className="mt-5">
+              <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+                Scoring model
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {["consensus", ...MODELS.map((m) => m.id)].map((id) => {
+                  const label =
+                    id === "consensus" ? "Consensus" : (MODELS.find((m) => m.id === id)?.name ?? id);
+                  const on = batchModel === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setBatchModel(id)}
+                      aria-pressed={on}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em]",
+                        on
+                          ? "bg-white/14 text-foreground"
+                          : "text-muted-foreground hover:bg-white/6 hover:text-foreground",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-4 flex gap-2">
               <button
                 onClick={start}
                 disabled={running || !fileObject}
