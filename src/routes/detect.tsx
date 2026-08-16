@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { AlertTriangle, Copy, Hash, Network, PlayCircle, Sliders, Sparkles } from "lucide-react";
+import { AlertTriangle, Copy, Cpu, Hash, Network, PlayCircle, Sliders, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Meter, ModuleShell, PageHeader, Panel, RiskBadge, StatTile } from "@/components/ui-kit";
-import { actionLabel, levelFromVerdict, verdictLabel } from "@/lib/platform-data";
+import { actionLabel, levelFromVerdict, MODELS, verdictLabel } from "@/lib/platform-data";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -110,6 +110,7 @@ function Detect() {
   const [valueEth, setValueEth] = useState(search.value ?? DEMO.valueEth);
   const [gasUsed, setGasUsed] = useState(DEMO.gasUsed);
 
+  const [selectedModel, setSelectedModel] = useState<string>("consensus");
   const [stage, setStage] = useState(-1);
   const [result, setResult] = useState<Result | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -186,12 +187,13 @@ function Detect() {
    */
   const selectModel = async (id: string) => {
     setViewModel(id);
+    setSelectedModel(id);
     if (!result) return;
     const base = resolved ?? buildPayload();
     await run({ ...base, model_id: id === "consensus" ? null : id.replace(/-/g, "_") }, id);
   };
 
-  const run = async (payload?: Record<string, unknown>, asModel = "consensus") => {
+  const run = async (payload?: Record<string, unknown>, asModel = selectedModel) => {
     setResult(null);
     setErrorMsg(null);
     // Only cleared for a fresh run. A model re-score reuses the resolved
@@ -212,10 +214,21 @@ function Detect() {
           setStage(-1);
           return;
         }
-        payload = r;
+        payload = {
+          ...r,
+          model_id: asModel === "consensus" ? null : asModel.replace(/-/g, "_"),
+        };
       } else {
-        payload = buildPayload();
+        payload = {
+          ...buildPayload(),
+          model_id: asModel === "consensus" ? null : asModel.replace(/-/g, "_"),
+        };
       }
+    } else if (!("model_id" in payload)) {
+      payload = {
+        ...payload,
+        model_id: asModel === "consensus" ? null : asModel.replace(/-/g, "_"),
+      };
     }
     setStage(0);
     const startTime = performance.now();
@@ -244,6 +257,7 @@ function Detect() {
       const d = data.data;
       const a = d.assessment;
       setScoredBy(asModel);
+      setViewModel(asModel);
       setResult({
         verdict: a.verdict,
         action: a.action,
@@ -291,7 +305,13 @@ function Detect() {
     setToAddr(DEMO.toAddr);
     setValueEth(DEMO.valueEth);
     setGasUsed(DEMO.gasUsed);
-    run(buildPayload({ ...DEMO, hash: "" }));
+    run(
+      {
+        ...buildPayload({ ...DEMO, hash: "" }),
+        model_id: selectedModel === "consensus" ? null : selectedModel.replace(/-/g, "_"),
+      },
+      selectedModel,
+    );
   };
 
   const busy = stage >= 0;
@@ -386,6 +406,76 @@ function Detect() {
               </div>
             </div>
           )}
+
+          {/* Target Model Selector */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+                <Cpu className="h-3.5 w-3.5 text-cyan-accent" />
+                Target AI Model / Strategy
+              </label>
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {selectedModel === "consensus"
+                  ? "6-Model Ensemble"
+                  : MODELS.find((m) => m.id === selectedModel)?.name || "Single Model"}
+              </span>
+            </div>
+
+            <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedModel("consensus");
+                  setViewModel("consensus");
+                }}
+                className={cn(
+                  "relative flex flex-col items-start rounded-xl p-2.5 text-left transition border",
+                  selectedModel === "consensus"
+                    ? "border-cyan/50 bg-cyan/10 text-foreground shadow-[0_0_12px_rgba(6,182,212,0.15)]"
+                    : "border-white/5 bg-white/3 text-muted-foreground hover:border-white/15 hover:bg-white/6 hover:text-foreground",
+                )}
+              >
+                <div className="flex w-full items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground">Consensus</span>
+                  {selectedModel === "consensus" && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse shrink-0" />
+                  )}
+                </div>
+                <span className="mt-1 text-[10px] text-muted-foreground leading-tight">
+                  Ensemble
+                </span>
+              </button>
+
+              {MODELS.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedModel(m.id);
+                    setViewModel(m.id);
+                  }}
+                  className={cn(
+                    "relative flex flex-col items-start rounded-xl p-2.5 text-left transition border",
+                    selectedModel === m.id
+                      ? "border-cyan/50 bg-cyan/10 text-foreground shadow-[0_0_12px_rgba(6,182,212,0.15)]"
+                      : "border-white/5 bg-white/3 text-muted-foreground hover:border-white/15 hover:bg-white/6 hover:text-foreground",
+                  )}
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <span className="text-xs font-semibold text-foreground truncate pr-1">
+                      {m.name}
+                    </span>
+                    {selectedModel === m.id && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse shrink-0" />
+                    )}
+                  </div>
+                  <span className="mt-1 text-[10px] text-muted-foreground leading-tight truncate w-full">
+                    {m.family}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="mt-7 flex gap-2">
             <button
