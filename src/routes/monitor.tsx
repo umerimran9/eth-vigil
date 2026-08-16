@@ -366,7 +366,13 @@ function Monitor() {
                   <RiskBadge level={displayFor(selected).level} />
                   <Link
                     to="/detect"
-                    search={{ from: selected.from, to: selected.to, value: String(selected.value) }}
+                    search={{
+                      from: selected.from,
+                      to: selected.to,
+                      value: String(selected.value),
+                      gas: String(selected.gas),
+                      hash: selected.hash,
+                    }}
                     className="inline-flex items-center gap-1.5 rounded-full glass-soft px-3.5 py-1.5 text-[11px] font-medium transition hover:bg-white/10"
                   >
                     <SearchCode className="h-3.5 w-3.5" /> Investigate further

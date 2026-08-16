@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -33,13 +33,27 @@ interface DetectSearch {
   from?: string | undefined;
   to?: string | undefined;
   value?: string | undefined;
+  gas?: string | undefined;
+  hash?: string | undefined;
 }
 
 export const Route = createFileRoute("/detect")({
   validateSearch: (search: Record<string, unknown>): DetectSearch => ({
     from: typeof search["from"] === "string" ? search["from"] : undefined,
     to: typeof search["to"] === "string" ? search["to"] : undefined,
-    value: typeof search["value"] === "string" ? search["value"] : undefined,
+    value:
+      typeof search["value"] === "string"
+        ? search["value"]
+        : typeof search["value"] === "number"
+        ? String(search["value"])
+        : undefined,
+    gas:
+      typeof search["gas"] === "string"
+        ? search["gas"]
+        : typeof search["gas"] === "number"
+        ? String(search["gas"])
+        : undefined,
+    hash: typeof search["hash"] === "string" ? search["hash"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -200,9 +214,17 @@ function Detect() {
 
   const [fromAddr, setFromAddr] = useState(search.from ?? PRESETS[0].fromAddr);
   const [toAddr, setToAddr] = useState(search.to ?? PRESETS[0].toAddr);
-  const [valueEth, setValueEth] = useState(search.value ?? PRESETS[0].valueEth);
-  const [gasUsed, setGasUsed] = useState(PRESETS[0].gasUsed);
-  const [hash, setHash] = useState("");
+  const [valueEth, setValueEth] = useState(search.value !== undefined ? search.value : PRESETS[0].valueEth);
+  const [gasUsed, setGasUsed] = useState(search.gas !== undefined ? search.gas : PRESETS[0].gasUsed);
+  const [hash, setHash] = useState(search.hash ?? "");
+
+  useEffect(() => {
+    if (search.from !== undefined) setFromAddr(search.from);
+    if (search.to !== undefined) setToAddr(search.to);
+    if (search.value !== undefined) setValueEth(search.value);
+    if (search.gas !== undefined) setGasUsed(search.gas);
+    if (search.hash !== undefined) setHash(search.hash);
+  }, [search.from, search.to, search.value, search.gas, search.hash]);
 
   const [selectedModel, setSelectedModel] = useState<string>("consensus");
   const [stage, setStage] = useState(-1);
