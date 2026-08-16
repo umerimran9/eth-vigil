@@ -1,229 +1,231 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowRight, Box, Radar, ShieldCheck, Sparkles, Activity, Brain } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useNetworkState } from "@/lib/network-state";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { motion, useScroll, useTransform } from "motion/react";
+import { useRef } from "react";
+import { ArrowUpRight, Command, ShieldCheck, Zap } from "lucide-react";
+import { AiCore } from "@/components/ai-core";
+import { NAV } from "@/components/nav-dock";
+import { MODELS } from "@/lib/platform-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aegis — Read Ethereum Before It Costs You" },
+      { title: "Aegis — AI Ethereum Fraud Detection Command Center" },
       {
         name: "description",
         content:
-          "Aegis watches Ethereum in real time and explains each transaction in plain language: seven models, one verdict, full evidence trail.",
+          "Aegis monitors Ethereum in real time and scores every transaction with a seven-model AI consensus engine, SHAP explainability and instant risk reporting.",
       },
-      { property: "og:title", content: "Aegis — Read Ethereum Before It Costs You" },
+      { property: "og:title", content: "Aegis — AI Ethereum Fraud Detection Command Center" },
       {
         property: "og:description",
         content:
-          "Real-time Ethereum monitoring with explainable AI verdicts on every transaction, wallet, and contract.",
+          "Real-time Ethereum monitoring with a seven-model AI consensus engine, explainable risk scoring and enterprise reporting.",
       },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Landing,
 });
 
-const NAV_LINKS = [
-  { label: "Overview", to: "/dashboard" },
-  { label: "Live stream", to: "/monitor" },
-  { label: "Investigate", to: "/detect" },
-  { label: "Models", to: "/models" },
-  { label: "Analytics", to: "/analytics" },
+const CAPABILITIES = [
+  {
+    title: "Real-time chain telemetry",
+    body: "Every block, every transfer, streamed and scored the moment it is mined. Risk surfaces before finality.",
+    icon: Zap,
+  },
+  {
+    title: "Seven models, one verdict",
+    body: "Gradient boosting, deep tabular transformers and linear baselines vote inside the Consensus Engine.",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Explainable by construction",
+    body: "SHAP attributions and natural-language reasoning accompany every single prediction we emit.",
+    icon: Command,
+  },
 ];
-
-const SAMPLES = [
-  "Drainer approval",
-  "Sanctioned bridge hop",
-  "Flash-loan probe",
-  "Mixer withdrawal",
-  "Rug-pull mint",
-];
-
-function PillNav() {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  return (
-    <div className="sticky top-4 z-30 flex justify-center px-4">
-      <nav
-        className={cn(
-          "pill-nav flex w-full max-w-4xl items-center gap-2 rounded-full px-3 py-2 transition-all duration-500",
-          scrolled ? "max-w-3xl py-1.5" : "",
-        )}
-      >
-        <Link to="/" className="nav-pill-item group flex items-center gap-2 rounded-full px-2 py-1.5">
-          <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground transition-transform duration-300 group-hover:rotate-12">
-            <Box className="h-4 w-4" />
-          </span>
-          <span className="text-sm font-semibold tracking-tight text-foreground">Aegis</span>
-        </Link>
-
-        <ul className="ml-2 hidden items-center gap-0.5 md:flex">
-          {NAV_LINKS.map((l) => (
-            <li key={l.to}>
-              <Link
-                to={l.to}
-                className="nav-pill-item block rounded-full px-3 py-1.5 text-[13px] text-foreground/70 hover:bg-foreground/10 hover:text-foreground"
-              >
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <Link
-          to="/dashboard"
-          className="lift ml-auto inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-[13px] font-semibold text-background hover:shadow-[0_12px_28px_-12px_rgba(139,92,246,0.9)]"
-        >
-          Open dashboard
-          <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-        </Link>
-      </nav>
-    </div>
-  );
-}
 
 function Landing() {
-  const net = useNetworkState();
-  const navigate = useNavigate();
-  const [hash, setHash] = useState("");
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = hash.trim();
-    if (!q) {
-      navigate({ to: "/dashboard" });
-      return;
-    }
-    navigate({ to: "/detect", search: { hash: q, aegisRun: true } });
-  };
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const coreScale = useTransform(scrollYProgress, [0, 1], [1, 1.35]);
+  const coreOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const titleY = useTransform(scrollYProgress, [0, 1], [0, -140]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="hero-field pb-24">
-        <PillNav />
+    <main className="relative">
+      <section ref={ref} className="relative flex min-h-[100svh] flex-col items-center justify-center px-5">
+        <motion.div
+          style={{ scale: coreScale, opacity: coreOpacity }}
+          className="pointer-events-none absolute inset-0 grid place-items-center"
+        >
+          <AiCore scale={1.15} />
+        </motion.div>
 
-        <header className="mx-auto max-w-3xl px-5 pt-20 text-center sm:pt-28">
-          <div className="rise inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-foreground/5 px-3 py-1 text-[11px] text-foreground/80 backdrop-blur">
+        <motion.div style={{ y: titleY }} className="relative z-10 max-w-4xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mx-auto inline-flex items-center gap-2 rounded-full glass-soft px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan/85"
+          >
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" />
-            Watching mainnet · head {net.blockLabel} · {net.baseFeeGwei.toFixed(1)} gwei
-          </div>
+            Core online · 7 models synced
+          </motion.div>
 
-          <h1
-            className="rise mt-7 font-display text-4xl font-semibold leading-[1.05] tracking-[-0.03em] text-foreground sm:text-6xl"
-            style={{ animationDelay: "80ms" }}
+          <motion.h1
+            initial={{ opacity: 0, y: 26, filter: "blur(14px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            className="mt-7 text-balance text-5xl font-semibold leading-[0.95] sm:text-7xl lg:text-[5.4rem]"
           >
-            Read Ethereum before
-            <br />
-            it costs you money.
-          </h1>
+            The intelligence layer for <span className="text-gradient">Ethereum trust</span>
+          </motion.h1>
 
-          <p
-            className="rise mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-foreground/70"
-            style={{ animationDelay: "160ms" }}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.55, duration: 0.9 }}
+            className="mx-auto mt-7 max-w-xl text-[15px] leading-relaxed text-muted-foreground sm:text-base"
           >
-            Paste a transaction, wallet, or contract. Seven models score it, argue, and hand you one
-            verdict with the evidence written out in plain English.
-          </p>
+            Aegis watches the chain, reasons about intent, and tells you why. A command center for
+            fraud detection — not a dashboard.
+          </motion.p>
 
-          <form
-            onSubmit={submit}
-            className="rise mx-auto mt-9 flex max-w-xl items-center gap-2 rounded-full border border-foreground/15 bg-foreground/[0.06] p-1.5 backdrop-blur transition-all duration-300 focus-within:border-primary/60 focus-within:bg-foreground/10"
-            style={{ animationDelay: "240ms" }}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.75 }}
+            className="mt-10 flex flex-wrap items-center justify-center gap-3"
           >
-            <input
-              value={hash}
-              onChange={(e) => setHash(e.target.value)}
-              placeholder="0x… transaction hash, wallet or contract"
-              aria-label="Transaction hash, wallet or contract address"
-              className="min-w-0 flex-1 bg-transparent px-4 font-mono text-[13px] text-foreground placeholder:text-foreground/40 focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="lift inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground hover:shadow-[0_14px_30px_-12px_rgba(139,92,246,1)]"
+            <Link
+              to="/monitor"
+              className="group inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:scale-[1.03] hover:shadow-[0_18px_50px_-16px_var(--signal-green)]"
             >
-              Analyse
-              <Sparkles className="h-3.5 w-3.5" />
-            </button>
-          </form>
+              Enter the command center
+              <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+            <Link
+              to="/consensus"
+              className="inline-flex items-center gap-2 rounded-full glass-soft px-6 py-3 text-sm font-medium transition hover:scale-[1.03] hover:bg-white/8"
+            >
+              See the consensus engine
+            </Link>
+          </motion.div>
 
-          <ul
-            className="rise mt-6 flex flex-wrap justify-center gap-2"
-            style={{ animationDelay: "320ms" }}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="mt-14 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4"
           >
-            {SAMPLES.map((s) => (
-              <li key={s}>
-                <Link
-                  to="/detect"
-                  className="lift block rounded-full border border-foreground/12 bg-foreground/5 px-3.5 py-1.5 text-[12px] text-foreground/75 hover:border-primary/50 hover:text-foreground"
-                >
-                  {s}
-                </Link>
-              </li>
+            {[
+              ["98.7%", "Peak accuracy"],
+              ["4 ms", "Median inference"],
+              ["18.9M", "Txns scored"],
+              ["7", "Ensemble models"],
+            ].map(([v, l]) => (
+              <div key={l}>
+                <div className="font-display text-2xl font-semibold tabular-nums">{v}</div>
+                <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  {l}
+                </div>
+              </div>
             ))}
-          </ul>
-        </header>
-      </div>
-
-      <section className="mx-auto -mt-14 grid w-full max-w-5xl gap-4 px-5 sm:grid-cols-3">
-        {[
-          {
-            icon: Activity,
-            title: "Never blinks",
-            body: "Every block streamed and scored as it lands — no polling, no gaps in the record.",
-          },
-          {
-            icon: Brain,
-            title: "Seven opinions",
-            body: "Gradient boosting, forests and transformers vote. Disagreement is shown, not hidden.",
-          },
-          {
-            icon: ShieldCheck,
-            title: "Evidence, not vibes",
-            body: "Each verdict ships with attribution, the flow path, and an audit-ready report.",
-          },
-        ].map((f, i) => (
-          <article
-            key={f.title}
-            className="card-flat lift rise rounded-2xl p-5"
-            style={{ animationDelay: `${400 + i * 80}ms` }}
-          >
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">
-              <f.icon className="h-4.5 w-4.5" />
-            </span>
-            <h2 className="mt-4 font-display text-base font-semibold tracking-tight">{f.title}</h2>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">{f.body}</p>
-          </article>
-        ))}
+          </motion.div>
+        </motion.div>
       </section>
 
-      <section className="mx-auto mt-20 max-w-5xl px-5 pb-24">
-        <div className="card-flat flex flex-col items-start justify-between gap-5 rounded-2xl p-7 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="font-display text-xl font-semibold tracking-tight">
-              The whole terminal is one click away.
-            </h2>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              Live stream, batch scanner, case history, model workspaces and audit reports.
-            </p>
-          </div>
-          <Link
-            to="/dashboard"
-            className="lift inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:shadow-[0_16px_34px_-14px_rgba(139,92,246,1)]"
-          >
-            <Radar className="h-4 w-4" />
-            Enter dashboard
-          </Link>
+      <section className="mx-auto max-w-[1400px] px-5 pb-28 sm:px-8">
+        <div className="grid gap-4 md:grid-cols-3">
+          {CAPABILITIES.map((c, i) => (
+            <motion.article
+              key={c.title}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ delay: i * 0.12, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -6 }}
+              className="rounded-3xl glass-panel p-7"
+            >
+              <c.icon className="h-5 w-5 text-cyan" strokeWidth={1.6} />
+              <h2 className="mt-6 text-lg font-semibold">{c.title}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{c.body}</p>
+            </motion.article>
+          ))}
         </div>
       </section>
-    </div>
+
+      <section className="mx-auto max-w-[1400px] px-5 pb-28 sm:px-8">
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-xl text-3xl font-semibold sm:text-4xl"
+        >
+          Eleven workspaces. One continuous surface.
+        </motion.h2>
+        <p className="mt-4 max-w-lg text-sm text-muted-foreground">
+          Switching never reloads a page — the workspace morphs around you. Press{" "}
+          <kbd className="rounded-md border border-white/12 px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>{" "}
+          anywhere.
+        </p>
+        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {NAV.filter((n) => n.to !== "/").map((n, i) => (
+            <motion.div
+              key={n.to}
+              initial={{ opacity: 0, scale: 0.96 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <Link
+                to={n.to}
+                className="group flex h-full items-center gap-3 rounded-2xl glass-soft p-5 transition hover:-translate-y-1 hover:bg-white/8"
+              >
+                <n.icon className="h-4 w-4 text-electric" strokeWidth={1.7} />
+                <span className="text-sm font-medium">{n.label}</span>
+                <ArrowUpRight className="ml-auto h-3.5 w-3.5 opacity-0 transition group-hover:opacity-60" />
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-[1400px] px-5 pb-48 sm:px-8">
+        <div className="rounded-[2rem] glass-panel p-8 sm:p-12">
+          <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-cyan/80">
+            The ensemble
+          </p>
+          <h2 className="mt-4 max-w-xl text-3xl font-semibold sm:text-4xl">
+            Seven independent minds, cross-examined in 42 ms.
+          </h2>
+          <div className="mt-10 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {MODELS.map((m, i) => (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06 }}
+              >
+                <Link
+                  to="/models/$modelId"
+                  params={{ modelId: m.id }}
+                  className="group block rounded-2xl border border-white/8 bg-white/3 p-5 transition hover:-translate-y-1 hover:border-cyan/30"
+                >
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-display text-base font-semibold">{m.name}</span>
+                    <span className="font-mono text-[11px] text-safe tabular-nums">
+                      {(m.accuracy * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{m.tagline}</p>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
