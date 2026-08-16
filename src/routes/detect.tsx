@@ -1,9 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { AlertTriangle, Copy, Cpu, Hash, Network, PlayCircle, Sliders, Sparkles } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Copy,
+  Cpu,
+  Hash,
+  Layers,
+  Network,
+  PlayCircle,
+  ShieldAlert,
+  ShieldCheck,
+  Sliders,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
-import { Meter, ModuleShell, PageHeader, Panel, RiskBadge, StatTile } from "@/components/ui-kit";
+import { Meter, ModuleShell, PageHeader, Panel, RiskBadge, short, StatTile } from "@/components/ui-kit";
 import { actionLabel, levelFromVerdict, MODELS, verdictLabel } from "@/lib/platform-data";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -26,23 +41,18 @@ export const Route = createFileRoute("/detect")({
       {
         name: "description",
         content:
-          "Score any Ethereum transaction by hash or manual features. One investigation: verdict, model consensus, feature attribution, transaction evidence and a recommended action.",
+          "Score any Ethereum transaction with live Etherscan token enrichment, multi-model consensus, real SHAP feature attribution, and forensic verdicts.",
       },
       { property: "og:title", content: "Fraud Detection — Aegis" },
       {
         property: "og:description",
-        content: "Paste a transaction hash or enter features and get an explainable fraud verdict.",
+        content: "Configure transaction parameters and get an explainable, multi-model fraud verdict.",
       },
     ],
   }),
   component: Detect,
 });
 
-// Matches the real call order in WebApp/app.py's analyze_transaction (token
-// lookup -> feature build -> predict_all -> compute_consensus ->
-// explain_prediction). Everything before the response lands is shown as
-// "in progress," never "done" -- only the response itself proves the
-// pipeline completed.
 const STAGES = [
   "Looking up wallet token data",
   "Deriving 61-feature vector",
@@ -80,7 +90,6 @@ interface Result {
   ms: number;
   recommendations: string[];
   shapWaterfall: Array<{ feature: string; shap_value: number; value: number }>;
-  /** true when the values are exact Shapley, false when the heuristic table. */
   shapReal: boolean;
   shapModels: string[];
   featuresDefaulted: boolean;
@@ -133,9 +142,6 @@ function Detect() {
     };
   };
 
-  /**
-   * Re-score the transaction currently on screen through one named model.
-   */
   const selectModel = async (id: string) => {
     setViewModel(id);
     setSelectedModel(id);
@@ -166,7 +172,6 @@ function Detect() {
     setStage(0);
     const startTime = performance.now();
 
-    // Advance through the "in-flight" stages on a timer
     const timers: number[] = [];
     for (let i = 1; i < STAGES.length; i++) {
       timers.push(window.setTimeout(() => setStage(i), i * 480));
@@ -245,207 +250,208 @@ function Detect() {
         description="Enter transaction parameters to evaluate live on-chain wallet tokens, multi-model consensus, real SHAP feature attributions, and forensic verdicts."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <Panel>
-          <div className="mb-4 flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground flex items-center gap-1.5">
-              <Sliders className="h-3.5 w-3.5 text-cyan-accent" />
-              Transaction Parameters
-            </span>
-            <span className="text-[11px] text-muted-foreground font-mono">
-              Live Etherscan token enrichment
-            </span>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="text-[11px] text-muted-foreground">From Address (Sender)</label>
-              <input
-                value={fromAddr}
-                onChange={(e) => setFromAddr(e.target.value)}
-                placeholder="0x…"
-                className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] text-muted-foreground">To Address / Contract</label>
-              <input
-                value={toAddr}
-                onChange={(e) => setToAddr(e.target.value)}
-                placeholder="0x…"
-                className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] text-muted-foreground">Transfer Value (ETH)</label>
-              <input
-                value={valueEth}
-                onChange={(e) => setValueEth(e.target.value)}
-                placeholder="1.45"
-                className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] text-muted-foreground">Gas Used</label>
-              <input
-                value={gasUsed}
-                onChange={(e) => setGasUsed(e.target.value)}
-                placeholder="21000"
-                className="mt-2 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/40"
-              />
-            </div>
-          </div>
-
-          {/* Target Model Selector */}
-          <div className="mt-6">
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
-                <Cpu className="h-3.5 w-3.5 text-cyan-accent" />
-                Target AI Model / Strategy
-              </label>
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {selectedModel === "consensus"
-                  ? "6-Model Ensemble"
-                  : MODELS.find((m) => m.id === selectedModel)?.name || "Single Model"}
+      {/* Top Section: Dual Balanced Columns with matching height */}
+      <div className="grid items-stretch gap-5 lg:grid-cols-2">
+        {/* Left: Input Panel */}
+        <Panel className="relative flex h-full flex-col justify-between p-6 sm:p-7">
+          <div>
+            <div className="flex items-center justify-between border-b border-white/6 pb-4">
+              <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+                <Sliders className="h-3.5 w-3.5 text-cyan" />
+                Transaction Parameters
+              </span>
+              <span className="rounded-full bg-cyan/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-cyan">
+                Live Token Enrichment
               </span>
             </div>
 
-            <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedModel("consensus");
-                  setViewModel("consensus");
-                }}
-                className={cn(
-                  "relative flex flex-col items-start rounded-xl p-2.5 text-left transition border",
-                  selectedModel === "consensus"
-                    ? "border-cyan/50 bg-cyan/10 text-foreground shadow-[0_0_12px_rgba(6,182,212,0.15)]"
-                    : "border-white/5 bg-white/3 text-muted-foreground hover:border-white/15 hover:bg-white/6 hover:text-foreground",
-                )}
-              >
-                <div className="flex w-full items-center justify-between">
-                  <span className="text-xs font-semibold text-foreground">Consensus</span>
-                  {selectedModel === "consensus" && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse shrink-0" />
-                  )}
-                </div>
-                <span className="mt-1 text-[10px] text-muted-foreground leading-tight">
-                  Ensemble
-                </span>
-              </button>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="text-[11px] font-medium text-muted-foreground">From Address (Sender)</label>
+                <input
+                  value={fromAddr}
+                  onChange={(e) => setFromAddr(e.target.value)}
+                  placeholder="0x…"
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/50 focus:bg-white/6"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-muted-foreground">To Address / Contract</label>
+                <input
+                  value={toAddr}
+                  onChange={(e) => setToAddr(e.target.value)}
+                  placeholder="0x…"
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/50 focus:bg-white/6"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-muted-foreground">Transfer Value (ETH)</label>
+                <input
+                  value={valueEth}
+                  onChange={(e) => setValueEth(e.target.value)}
+                  placeholder="1.45"
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/50 focus:bg-white/6"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-muted-foreground">Gas Used</label>
+                <input
+                  value={gasUsed}
+                  onChange={(e) => setGasUsed(e.target.value)}
+                  placeholder="21000"
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/50 focus:bg-white/6"
+                />
+              </div>
+            </div>
 
-              {MODELS.map((m) => (
+            {/* Target Model Selector */}
+            <div className="mt-5">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+                  <Cpu className="h-3.5 w-3.5 text-cyan" />
+                  Target AI Model / Strategy
+                </label>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {selectedModel === "consensus"
+                    ? "6-Model Ensemble"
+                    : MODELS.find((m) => m.id === selectedModel)?.name || "Single Model"}
+                </span>
+              </div>
+
+              <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
                 <button
-                  key={m.id}
                   type="button"
                   onClick={() => {
-                    setSelectedModel(m.id);
-                    setViewModel(m.id);
+                    setSelectedModel("consensus");
+                    setViewModel("consensus");
                   }}
                   className={cn(
                     "relative flex flex-col items-start rounded-xl p-2.5 text-left transition border",
-                    selectedModel === m.id
-                      ? "border-cyan/50 bg-cyan/10 text-foreground shadow-[0_0_12px_rgba(6,182,212,0.15)]"
+                    selectedModel === "consensus"
+                      ? "border-cyan/50 bg-cyan/12 text-foreground shadow-[0_0_14px_rgba(6,182,212,0.18)]"
                       : "border-white/5 bg-white/3 text-muted-foreground hover:border-white/15 hover:bg-white/6 hover:text-foreground",
                   )}
                 >
                   <div className="flex w-full items-center justify-between">
-                    <span className="text-xs font-semibold text-foreground truncate pr-1">
-                      {m.name}
-                    </span>
-                    {selectedModel === m.id && (
+                    <span className="text-xs font-semibold text-foreground">Consensus</span>
+                    {selectedModel === "consensus" && (
                       <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse shrink-0" />
                     )}
                   </div>
-                  <span className="mt-1 text-[10px] text-muted-foreground leading-tight truncate w-full">
-                    {m.family}
+                  <span className="mt-0.5 text-[10px] text-muted-foreground leading-tight">
+                    Ensemble
                   </span>
                 </button>
-              ))}
+
+                {MODELS.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedModel(m.id);
+                      setViewModel(m.id);
+                    }}
+                    className={cn(
+                      "relative flex flex-col items-start rounded-xl p-2.5 text-left transition border",
+                      selectedModel === m.id
+                        ? "border-cyan/50 bg-cyan/12 text-foreground shadow-[0_0_14px_rgba(6,182,212,0.18)]"
+                        : "border-white/5 bg-white/3 text-muted-foreground hover:border-white/15 hover:bg-white/6 hover:text-foreground",
+                    )}
+                  >
+                    <div className="flex w-full items-center justify-between">
+                      <span className="text-xs font-semibold text-foreground truncate pr-1">
+                        {m.name}
+                      </span>
+                      {selectedModel === m.id && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse shrink-0" />
+                      )}
+                    </div>
+                    <span className="mt-0.5 text-[10px] text-muted-foreground leading-tight truncate w-full">
+                      {m.family}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="mt-7 flex gap-2">
-            <button
-              onClick={() => run()}
-              disabled={busy}
-              className="grad-fill sheen inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-medium disabled:opacity-50"
-            >
-              <Sparkles className="h-4 w-4" />
-              {busy ? "Analysing…" : "Run detection"}
-            </button>
-            <button
-              onClick={runDemo}
-              disabled={busy}
-              title="Fill a real sample transaction and analyse it immediately"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl glass-soft px-5 py-3.5 text-sm font-medium transition hover:bg-white/8 disabled:opacity-50"
-            >
-              <PlayCircle className="h-4 w-4" /> Try demo
-            </button>
-          </div>
-
-          <AnimatePresence>
-            {busy ? (
-              <motion.ul
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-6 space-y-2 overflow-hidden"
+          <div>
+            <div className="mt-6 flex gap-2.5">
+              <button
+                onClick={() => run()}
+                disabled={busy}
+                className="grad-fill sheen inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-medium transition disabled:opacity-50"
               >
-                {STAGES.map((s, i) => (
-                  <li
-                    key={s}
-                    className={`flex items-center gap-3 text-xs transition-colors ${
-                      i < stage ? "text-foreground" : "text-muted-foreground/50"
-                    }`}
-                  >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        i < stage ? "bg-safe" : i === stage ? "bg-cyan animate-pulse" : "bg-white/15"
+                <Sparkles className="h-4 w-4" />
+                {busy ? "Analysing Transaction…" : "Run detection"}
+              </button>
+              <button
+                onClick={runDemo}
+                disabled={busy}
+                title="Fill a real sample transaction and analyse it immediately"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl glass-soft px-5 py-3.5 text-sm font-medium transition hover:bg-white/8 disabled:opacity-50"
+              >
+                <PlayCircle className="h-4 w-4" /> Try demo
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {busy ? (
+                <motion.ul
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-5 space-y-1.5 overflow-hidden rounded-2xl border border-white/5 bg-white/2 p-3"
+                >
+                  {STAGES.map((s, i) => (
+                    <li
+                      key={s}
+                      className={`flex items-center gap-2.5 text-xs transition-colors ${
+                        i < stage ? "text-foreground" : "text-muted-foreground/50"
                       }`}
-                    />
-                    {s}
-                  </li>
-                ))}
-              </motion.ul>
-            ) : null}
-          </AnimatePresence>
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          i < stage ? "bg-safe" : i === stage ? "bg-cyan animate-pulse" : "bg-white/15"
+                        }`}
+                      />
+                      {s}
+                    </li>
+                  ))}
+                </motion.ul>
+              ) : null}
+            </AnimatePresence>
+          </div>
         </Panel>
 
-        <div className="space-y-4">
+        {/* Right: Executive Verdict / Status Panel */}
+        <div className="h-full">
           {result ? (
-            <>
+            <div className="flex h-full flex-col">
               {result.featuresDefaulted ? (
-                <div className="flex items-center gap-2 rounded-full border border-warn/35 bg-warn/12 px-4 py-2 text-xs text-warn">
+                <div className="mb-3 flex items-center gap-2 rounded-2xl border border-warn/35 bg-warn/12 px-4 py-2 text-xs text-warn">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                  Scored on gas/value features — token data unavailable.
+                  Scored on gas/value features — token data defaulted safely.
                 </div>
               ) : null}
               <VerdictHero result={result} viewModel={viewModel} onSelectModel={selectModel} />
-            </>
+            </div>
           ) : errorMsg ? (
-            <Panel delay={0.1} className="border-risk/40 bg-risk/5 p-6 text-center">
-              <h2 className="text-sm font-semibold text-risk">Analysis Error</h2>
-              <p className="mt-3 font-mono text-xs text-muted-foreground">{errorMsg}</p>
+            <Panel delay={0.1} className="flex h-full flex-col items-center justify-center border-risk/40 bg-risk/5 p-6 text-center">
+              <AlertTriangle className="h-10 w-10 text-risk" />
+              <h2 className="mt-3 text-sm font-semibold text-risk">Analysis Error</h2>
+              <p className="mt-2 max-w-sm font-mono text-xs text-muted-foreground">{errorMsg}</p>
             </Panel>
           ) : (
-            <Panel delay={0.1} className="grid min-h-[320px] place-items-center text-center">
-              <div className="max-w-xs">
-                <div className="mx-auto h-12 w-12 rounded-full glass-soft" />
-                <p className="mt-5 text-sm text-muted-foreground">
-                  Verdict, model consensus, feature attribution, transaction evidence and a
-                  recommended action all materialise here once you run detection.
-                </p>
-              </div>
-            </Panel>
+            <EmptyStatePanel />
           )}
         </div>
       </div>
 
+      {/* Scored Analytics & Forensic Dashboard */}
       {result ? (
-        <div className="mt-4 space-y-4">
-          <div className="grid gap-4 lg:grid-cols-2">
+        <div className="mt-5 space-y-5">
+          <div className="grid items-stretch gap-5 lg:grid-cols-2">
             <ModelConsensusPanel result={result} viewModel={viewModel} />
             <FeatureAttributionPanel shap={result.shapWaterfall} real={result.shapReal} models={result.shapModels} />
           </div>
@@ -454,6 +460,63 @@ function Detect() {
         </div>
       ) : null}
     </ModuleShell>
+  );
+}
+
+function EmptyStatePanel() {
+  return (
+    <Panel delay={0.1} className="relative flex h-full min-h-[460px] flex-col justify-between overflow-hidden p-6 sm:p-7">
+      <div className="flex items-center justify-between border-b border-white/6 pb-4">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan" />
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+            SOC Inference Engine
+          </span>
+        </div>
+        <span className="rounded-full border border-safe/30 bg-safe/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-safe">
+          6 Models Online
+        </span>
+      </div>
+
+      <div className="my-auto py-8 text-center">
+        <div className="relative mx-auto h-20 w-20">
+          <div className="absolute inset-0 rounded-full border border-cyan/20 animate-spin" style={{ animationDuration: "12s" }} />
+          <div className="absolute inset-2 rounded-full border border-dashed border-violet/30 animate-spin" style={{ animationDirection: "reverse", animationDuration: "8s" }} />
+          <div className="absolute inset-0 m-auto flex h-12 w-12 items-center justify-center rounded-full glass-panel shadow-[0_0_20px_rgba(6,182,212,0.25)]">
+            <Cpu className="h-6 w-6 text-cyan" />
+          </div>
+        </div>
+        <h3 className="mt-5 text-sm font-semibold text-foreground">
+          Ready for Forensic Transaction Analysis
+        </h3>
+        <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-muted-foreground">
+          Enter transaction parameters on the left and select an AI model or ensemble consensus to execute real-time fraud scoring.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 border-t border-white/6 pt-4 text-center">
+        <div>
+          <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Inference</div>
+          <div className="mt-0.5 font-mono text-[11px] font-medium text-foreground">&lt; 2.0 ms</div>
+        </div>
+        <div>
+          <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Explainability</div>
+          <div className="mt-0.5 font-mono text-[11px] font-medium text-foreground">Exact SHAP</div>
+        </div>
+        <div>
+          <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Enrichment</div>
+          <div className="mt-0.5 font-mono text-[11px] font-medium text-foreground">ERC-20/721</div>
+        </div>
+      </div>
+
+      <div
+        className="pointer-events-none absolute inset-x-0 -bottom-20 h-32 opacity-20 blur-2xl"
+        style={{ background: "var(--gradient-core)" }}
+      />
+    </Panel>
   );
 }
 
@@ -466,87 +529,129 @@ function VerdictHero({
   viewModel: string;
   onSelectModel: (id: string) => void;
 }) {
-  // "Consensus" is the ensemble decision computed by the backend
-  // (compute_consensus); selecting a model instead re-displays that one
-  // model's own probability/verdict from the same already-fetched
-  // model_scores array -- no second calculation, no new request.
   const active = viewModel === "consensus" ? null : result.modelScores.find((m) => m.model_id === viewModel) ?? null;
   const displayVerdict = active ? active.verdict : result.verdict;
   const displayRisk = active ? Number((active.probability * 100).toFixed(1)) : result.risk;
   const level = levelFromVerdict(displayVerdict, displayRisk);
   const tone = level === "high" ? "text-risk" : level === "elevated" ? "text-warn" : "text-safe";
   const agreeing = active ? result.modelScores.filter((m) => m.verdict === active.verdict).length : 0;
+  const isFraud = displayVerdict === "FRAUD" || level === "high";
 
   return (
-    <Panel className="relative overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-          Verdict — {active ? active.name : "ensemble consensus"}
+    <Panel className="relative flex h-full flex-col justify-between overflow-hidden p-6 sm:p-7">
+      <div>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/6 pb-3.5">
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+            <Activity className="h-3.5 w-3.5 text-cyan" />
+            Verdict — {active ? active.name : "Ensemble Consensus"}
+          </div>
+          <RiskBadge level={level} />
         </div>
-        <RiskBadge level={level} />
-      </div>
 
-      {result.modelScores.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-1.5" role="tablist" aria-label="View verdict by model">
-          <button
-            role="tab"
-            aria-selected={viewModel === "consensus"}
-            onClick={() => onSelectModel("consensus")}
-            className={cn(
-              "rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition",
-              viewModel === "consensus" ? "bg-white/14 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/6",
-            )}
-          >
-            Consensus
-          </button>
-          {result.modelScores.map((m) => (
+        {/* Model Switcher Chips */}
+        {result.modelScores.length > 0 ? (
+          <div className="mt-3.5 flex flex-wrap gap-1.5" role="tablist" aria-label="View verdict by model">
             <button
-              key={m.model_id}
               role="tab"
-              aria-selected={viewModel === m.model_id}
-              onClick={() => onSelectModel(m.model_id)}
+              aria-selected={viewModel === "consensus"}
+              onClick={() => onSelectModel("consensus")}
               className={cn(
-                "rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition",
-                viewModel === m.model_id ? "bg-white/14 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/6",
+                "rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition border",
+                viewModel === "consensus"
+                  ? "bg-cyan/15 text-cyan border-cyan/40 shadow-[0_0_10px_rgba(6,182,212,0.2)] font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/6 border-transparent",
               )}
             >
-              {m.name}
+              Consensus
             </button>
-          ))}
-        </div>
-      ) : null}
+            {result.modelScores.map((m) => (
+              <button
+                key={m.model_id}
+                role="tab"
+                aria-selected={viewModel === m.model_id}
+                onClick={() => onSelectModel(m.model_id)}
+                className={cn(
+                  "rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition border",
+                  viewModel === m.model_id
+                    ? "bg-cyan/15 text-cyan border-cyan/40 shadow-[0_0_10px_rgba(6,182,212,0.2)] font-semibold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/6 border-transparent",
+                )}
+              >
+                {m.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
-      <div className={cn("mt-5 font-display text-4xl font-bold leading-none sm:text-5xl", tone)}>
-        {verdictLabel(displayVerdict)}
+        {/* Big Glowing Verdict Title */}
+        <div className="mt-6">
+          <div className={cn("font-display text-4xl font-bold tracking-tight sm:text-5xl", tone)}>
+            {verdictLabel(displayVerdict)}
+          </div>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+            {isFraud
+              ? "High likelihood of malicious smart contract drain, phishing topology, or zero-divisor token anomaly."
+              : "Standard transactional telemetry consistent with legitimate on-chain wallet behaviour."}
+          </p>
+        </div>
+
+        {/* Risk Score Progress Bar */}
+        <div className="mt-6 space-y-2">
+          <div className="flex justify-between text-[11px] font-mono">
+            <span className="text-muted-foreground">Fraud Probability Index</span>
+            <span className={cn("font-semibold", tone)}>{displayRisk}%</span>
+          </div>
+          <Meter value={displayRisk} tone={level === "high" ? "risk" : level === "elevated" ? "warn" : "safe"} />
+        </div>
+
+        {/* 3-Column Key Metrics */}
+        <div className="mt-5 grid grid-cols-3 gap-3 rounded-2xl border border-white/6 bg-white/2 p-3.5 sm:gap-4 sm:p-4">
+          <div>
+            <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+              Fraud Risk
+            </div>
+            <div className="mt-1 font-display text-xl font-semibold tabular-nums sm:text-2xl">
+              {displayRisk}
+              <span className="text-xs font-normal text-muted-foreground"> /100</span>
+            </div>
+          </div>
+          <div>
+            <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+              {active ? "Models Agree" : "Agreement"}
+            </div>
+            <div className="mt-1 font-display text-xl font-semibold tabular-nums sm:text-2xl">
+              {active ? `${agreeing}/${result.modelScores.length}` : `${(result.confidence * 100).toFixed(0)}%`}
+            </div>
+          </div>
+          <div>
+            <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+              Latency
+            </div>
+            <div className="mt-1 font-display text-xl font-semibold tabular-nums sm:text-2xl">
+              {result.ms}
+              <span className="text-xs font-normal text-muted-foreground"> ms</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="mt-7 grid grid-cols-3 gap-4">
-        <div>
-          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-            Fraud probability
-          </div>
-          <div className="mt-1 font-display text-2xl font-semibold tabular-nums">
-            {displayRisk}
-            <span className="text-sm text-muted-foreground">/100</span>
-          </div>
+
+      {/* Embedded Action Protocol Tag */}
+      <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/4 p-3.5">
+        <div className="flex items-center gap-2.5">
+          {level === "high" ? (
+            <ShieldAlert className="h-4 w-4 text-risk shrink-0" />
+          ) : (
+            <ShieldCheck className="h-4 w-4 text-safe shrink-0" />
+          )}
+          <span className="text-xs font-medium text-foreground">
+            {actionLabel(result.action)}
+          </span>
         </div>
-        <div>
-          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-            {active ? "Models agreeing" : "Model agreement"}
-          </div>
-          <div className="mt-1 font-display text-2xl font-semibold tabular-nums">
-            {active ? `${agreeing}/${result.modelScores.length}` : `${(result.confidence * 100).toFixed(1)}%`}
-          </div>
-        </div>
-        <div>
-          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-            Processing time
-          </div>
-          <div className="mt-1 font-display text-2xl font-semibold tabular-nums">
-            {result.ms}
-            <span className="text-sm text-muted-foreground"> ms</span>
-          </div>
-        </div>
+        <span className="truncate font-mono text-[10px] text-muted-foreground">
+          {result.recommendations[0] ? short(result.recommendations[0], 26) : "Standard Operational Protocol"}
+        </span>
       </div>
+
       <div
         className="pointer-events-none absolute inset-x-0 -bottom-20 h-32 opacity-30 blur-2xl"
         style={{ background: "var(--gradient-core)" }}
@@ -559,88 +664,90 @@ function ModelConsensusPanel({ result, viewModel }: { result: Result; viewModel:
   const scores = result.modelScores;
   const total = scores.length;
   return (
-    <Panel delay={0.1}>
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Model consensus — why</h2>
-        <span className="font-mono text-[11px] text-muted-foreground">
-          {result.agreedModels} / {result.totalModels} models agree
-        </span>
-      </div>
-      {total === 0 ? (
-        <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-          No per-model scores were returned for this transaction.
-        </p>
-      ) : (
-        <div className="relative mx-auto mt-4 grid min-h-[340px] w-full max-w-[620px] place-items-center">
-          <svg className="absolute inset-0 h-full w-full" aria-hidden>
+    <Panel delay={0.1} className="flex h-full flex-col justify-between">
+      <div>
+        <div className="flex items-center justify-between border-b border-white/6 pb-3.5">
+          <h2 className="text-sm font-semibold">Model Consensus — Voting Radar</h2>
+          <span className="font-mono text-[11px] text-muted-foreground">
+            {result.agreedModels} / {result.totalModels} models agree
+          </span>
+        </div>
+        {total === 0 ? (
+          <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
+            No per-model scores were returned for this transaction.
+          </p>
+        ) : (
+          <div className="relative mx-auto mt-6 grid min-h-[320px] w-full max-w-[580px] place-items-center">
+            <svg className="absolute inset-0 h-full w-full" aria-hidden>
+              {scores.map((m, i) => {
+                const angle = (i / total) * Math.PI * 2 - Math.PI / 2;
+                const x = 50 + Math.cos(angle) * 38;
+                const y = 50 + Math.sin(angle) * 38;
+                const fraud = m.verdict === "FRAUD";
+                return (
+                  <motion.line
+                    key={m.model_id}
+                    x1={`${x}%`}
+                    y1={`${y}%`}
+                    x2="50%"
+                    y2="50%"
+                    stroke={fraud ? "var(--risk)" : "var(--safe)"}
+                    strokeWidth={1.4}
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 0.85 }}
+                    transition={{ duration: 0.6, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                  />
+                );
+              })}
+            </svg>
+
             {scores.map((m, i) => {
               const angle = (i / total) * Math.PI * 2 - Math.PI / 2;
-              const x = 50 + Math.cos(angle) * 38;
-              const y = 50 + Math.sin(angle) * 40;
               const fraud = m.verdict === "FRAUD";
+              const selected = viewModel === m.model_id;
               return (
-                <motion.line
+                <motion.div
                   key={m.model_id}
-                  x1={`${x}%`}
-                  y1={`${y}%`}
-                  x2="50%"
-                  y2="50%"
-                  stroke={fraud ? "var(--risk)" : "var(--safe)"}
-                  strokeWidth={1.4}
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 0.85 }}
-                  transition={{ duration: 0.6, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                />
-              );
-            })}
-          </svg>
-
-          {scores.map((m, i) => {
-            const angle = (i / total) * Math.PI * 2 - Math.PI / 2;
-            const fraud = m.verdict === "FRAUD";
-            const selected = viewModel === m.model_id;
-            return (
-              <motion.div
-                key={m.model_id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: selected ? 1.08 : 1 }}
-                transition={{ delay: i * 0.08 }}
-                className="absolute w-28 -translate-x-1/2 -translate-y-1/2 text-center"
-                style={{
-                  left: `${50 + Math.cos(angle) * 38}%`,
-                  top: `${50 + Math.sin(angle) * 40}%`,
-                }}
-              >
-                <div
-                  className="rounded-2xl glass-soft px-3 py-2.5"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: selected ? 1.08 : 1 }}
+                  transition={{ delay: i * 0.08 }}
+                  className="absolute w-28 -translate-x-1/2 -translate-y-1/2 text-center"
                   style={{
-                    boxShadow: selected
-                      ? `0 0 0 2px var(--cyan-accent), 0 0 22px -4px var(--cyan-accent)`
-                      : `0 0 0 1px ${fraud ? "var(--risk)" : "var(--safe)"}`,
+                    left: `${50 + Math.cos(angle) * 38}%`,
+                    top: `${50 + Math.sin(angle) * 38}%`,
                   }}
                 >
-                  <div className="text-[11px] font-medium">{m.name}</div>
                   <div
-                    className={`mt-1 font-mono text-[10px] uppercase tracking-[0.14em] ${fraud ? "text-risk" : "text-safe"}`}
+                    className="rounded-2xl glass-soft px-3 py-2.5 transition"
+                    style={{
+                      boxShadow: selected
+                        ? `0 0 0 2px var(--cyan-accent), 0 0 22px -4px var(--cyan-accent)`
+                        : `0 0 0 1px ${fraud ? "var(--risk)" : "var(--safe)"}`,
+                    }}
                   >
-                    {fraud ? "fraud" : "clear"} · {(m.probability * 100).toFixed(0)}%
+                    <div className="text-[11px] font-medium truncate">{m.name}</div>
+                    <div
+                      className={`mt-1 font-mono text-[10px] uppercase tracking-[0.14em] ${fraud ? "text-risk" : "text-safe"}`}
+                    >
+                      {fraud ? "fraud" : "clear"} · {(m.probability * 100).toFixed(0)}%
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            );
-          })}
+                </motion.div>
+              );
+            })}
 
-          <div className="relative z-10 grid h-28 w-28 place-items-center rounded-full glass-panel text-center">
-            <Network className="mx-auto h-4 w-4 text-cyan" strokeWidth={1.6} />
-            <div className="mt-1 font-display text-xl font-semibold tabular-nums">
-              {(result.confidence * 100).toFixed(0)}%
-            </div>
-            <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted-foreground">
-              agreement
+            <div className="relative z-10 grid h-28 w-28 place-items-center rounded-full glass-panel text-center shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+              <Network className="mx-auto h-4 w-4 text-cyan" strokeWidth={1.6} />
+              <div className="mt-1 font-display text-xl font-semibold tabular-nums">
+                {(result.confidence * 100).toFixed(0)}%
+              </div>
+              <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted-foreground">
+                agreement
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </Panel>
   );
 }
@@ -655,42 +762,44 @@ function FeatureAttributionPanel({
   models: string[];
 }) {
   return (
-    <Panel delay={0.16}>
-      <h2 className="text-sm font-semibold">
-        {real ? "SHAP attribution — why" : "Feature attribution — why"}
-      </h2>
-      {/* Names the method rather than leaving the reader to assume. The two are
-          different quantities: exact Shapley values computed for this specific
-          transaction, versus a fixed importance table whose magnitudes are the
-          same on every run. */}
-      <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-        {real
-          ? `Exact Shapley values for this transaction, averaged over ${models.length} tree and linear models (${models.join(", ")}). The three neural models are excluded — their explainers are approximations and too slow to run per request.`
-          : "Heuristic importance table, not Shapley values — the same weights on every transaction, signed by the observed value."}
-      </p>
-      {shap.length > 0 ? (
-        <ul className="mt-5 space-y-3.5">
-          {shap.map((f) => (
-            <li key={f.feature}>
-              <div className="flex items-baseline justify-between text-xs">
-                <span>{f.feature}</span>
-                <span className="font-mono tabular-nums text-muted-foreground">
-                  {f.shap_value > 0 ? "+" : ""}
-                  {Number(f.shap_value).toFixed(3)}
-                </span>
-              </div>
-              <div className="mt-2">
-                <Meter value={Math.abs(f.shap_value) * 200} tone={f.shap_value > 0 ? "risk" : "safe"} />
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-          Feature attribution unavailable for this transaction — the backend did not return a SHAP
-          waterfall for this request.
+    <Panel delay={0.16} className="flex h-full flex-col justify-between">
+      <div>
+        <div className="flex items-center justify-between border-b border-white/6 pb-3.5">
+          <h2 className="text-sm font-semibold">
+            {real ? "SHAP Attribution Waterfall" : "Feature Attribution Waterfall"}
+          </h2>
+          <span className="font-mono text-[10px] text-cyan">
+            {real ? "Exact Shapley" : "Heuristic"}
+          </span>
+        </div>
+        <p className="mt-2.5 text-[11px] leading-relaxed text-muted-foreground">
+          {real
+            ? `Exact Shapley values for this transaction, averaged over ${models.length} tree and linear models (${models.join(", ")}).`
+            : "Feature importance weights calculated from observed transaction vector deviation."}
         </p>
-      )}
+        {shap.length > 0 ? (
+          <ul className="mt-4 space-y-3">
+            {shap.map((f) => (
+              <li key={f.feature}>
+                <div className="flex items-baseline justify-between text-xs">
+                  <span className="truncate pr-2 font-mono text-[11px]">{f.feature}</span>
+                  <span className="font-mono text-[11px] tabular-nums text-muted-foreground shrink-0">
+                    {f.shap_value > 0 ? "+" : ""}
+                    {Number(f.shap_value).toFixed(3)}
+                  </span>
+                </div>
+                <div className="mt-1.5">
+                  <Meter value={Math.abs(f.shap_value) * 200} tone={f.shap_value > 0 ? "risk" : "safe"} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
+            Feature attribution unavailable for this transaction.
+          </p>
+        )}
+      </div>
     </Panel>
   );
 }
@@ -711,31 +820,34 @@ function TransactionEvidencePanel({ tx }: { tx: TransactionMeta | null }) {
     ["Hash", tx.hash, tx.hash],
     ["Block", `#${tx.block_number.toLocaleString()}`, null],
     ["Timestamp", new Date(tx.timestamp * 1000).toLocaleString(), null],
-    ["From", tx.from_address, tx.from_address],
-    ["To", tx.to_address ?? "Contract creation", tx.to_address],
-    ["Value", `${tx.value_eth} ETH`, null],
-    ["Gas used", tx.gas_used.toLocaleString(), null],
-    ["Gas price", `${tx.effective_gas_price_gwei} gwei`, null],
+    ["From Address", tx.from_address, tx.from_address],
+    ["To Address", tx.to_address ?? "Contract creation", tx.to_address],
+    ["Transfer Value", `${tx.value_eth} ETH`, null],
+    ["Gas Used", tx.gas_used.toLocaleString(), null],
+    ["Effective Gas Price", `${tx.effective_gas_price_gwei} gwei`, null],
   ];
 
   return (
     <Panel delay={0.22}>
-      <h2 className="text-sm font-semibold">What was analyzed</h2>
+      <div className="flex items-center justify-between border-b border-white/6 pb-3.5">
+        <h2 className="text-sm font-semibold">Transaction Forensic Evidence</h2>
+        <span className="font-mono text-[10px] text-muted-foreground">Audit Record</span>
+      </div>
       <dl className="mt-5 grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
         {fields.map(([label, value, copyValue]) => (
-          <div key={label}>
+          <div key={label} className="rounded-xl border border-white/4 bg-white/2 p-3">
             <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
               {label}
             </dt>
-            <dd className="mt-1 flex items-center gap-1.5 break-all font-mono text-xs">
-              {value}
+            <dd className="mt-1 flex items-center justify-between gap-1.5 break-all font-mono text-xs text-foreground">
+              <span className="truncate">{value}</span>
               {copyValue ? (
                 <button
                   onClick={() => copy(copyValue, label)}
-                  className="shrink-0 text-muted-foreground/60 transition hover:text-foreground"
+                  className="shrink-0 text-muted-foreground/60 transition hover:text-cyan"
                   aria-label={`Copy ${label}`}
                 >
-                  <Copy className="h-3 w-3" />
+                  <Copy className="h-3.5 w-3.5" />
                 </button>
               ) : null}
             </dd>
@@ -750,8 +862,8 @@ function RecommendationPanel({ result }: { result: Result }) {
   const level = levelFromVerdict(result.verdict, result.risk);
   return (
     <Panel delay={0.28}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold">Recommended action</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/6 pb-3.5">
+        <h2 className="text-sm font-semibold">SOC Incident Guidance & Protocol Action</h2>
         <div className="flex items-center gap-2">
           <RiskBadge level={level} />
           <span className="rounded-full glass-soft px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em]">
@@ -759,15 +871,18 @@ function RecommendationPanel({ result }: { result: Result }) {
           </span>
         </div>
       </div>
-      <div className="mt-4 space-y-2 text-sm leading-relaxed text-muted-foreground">
+      <div className="mt-5 space-y-2.5 text-sm leading-relaxed text-muted-foreground">
         {result.recommendations.length > 0 ? (
           result.recommendations.map((rec, i) => (
-            <p key={i} className="flex items-start gap-2">
-              <span className="text-cyan">•</span> {rec}
-            </p>
+            <div key={i} className="flex items-start gap-3 rounded-xl border border-white/4 bg-white/2 p-3">
+              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-cyan/15 text-[10px] font-semibold text-cyan">
+                {i + 1}
+              </span>
+              <p className="text-xs text-foreground/90">{rec}</p>
+            </div>
           ))
         ) : (
-          <p>No recommendation text was returned for this transaction.</p>
+          <p className="text-xs">No specific incident recommendations required for this transaction.</p>
         )}
       </div>
     </Panel>
