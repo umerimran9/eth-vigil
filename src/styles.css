@@ -51,98 +51,102 @@
 
 }
 
-/* Light Theme - Clean Web3 SaaS */
+/* Light Theme - soft bone with lime signal */
 :root {
   --radius: 0.75rem;
 
-  --background: #f7f5ff;
-  --foreground: #1b1230;
+  --background: #f6f4f8;
+  --foreground: #14101a;
   --card: #ffffff;
-  --card-foreground: #1b1230;
+  --card-foreground: #14101a;
   --popover: #ffffff;
-  --popover-foreground: #1b1230;
-  --primary: #7c3aed;
-  --primary-foreground: #ffffff;
-  --secondary: #f1ecfe;
-  --secondary-foreground: #1b1230;
-  --muted: #f1ecfe;
-  --muted-foreground: #6b6486;
-  --accent: #ede7fe;
-  --accent-foreground: #5b21b6;
-  --destructive: #f43f5e;
+  --popover-foreground: #14101a;
+  --primary: #7fbe1c;
+  --primary-foreground: #12160a;
+  --secondary: #f0edf4;
+  --secondary-foreground: #14101a;
+  --muted: #f0edf4;
+  --muted-foreground: #6b6577;
+  --accent: #ece6fb;
+  --accent-foreground: #4c2f9e;
+  --destructive: #f4405e;
   --destructive-foreground: #ffffff;
-  --border: #e5ddfb;
-  --input: #e5ddfb;
-  --ring: #7c3aed;
+  --border: #e4e0ec;
+  --input: #e4e0ec;
+  --ring: #7fbe1c;
 
-  --brand: #7c3aed;
-  --safe: #22c58b;
-  --warn: #f5a524;
+  --brand: #7fbe1c;
+  --lavender: #7c5cf0;
+  --safe: #4aa32a;
+  --warn: #d98a09;
   --risk: #f4405e;
 
   --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.03);
 }
 
-/* Dark Theme - Sophisticated Purple/Indigo Web3 SaaS */
+/* Dark Theme - near-black canvas, lime signal, lavender glow (Ledgerly) */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #120c22;
-    --foreground: #f3f0ff;
-    --card: #1c1436;
-    --card-foreground: #f3f0ff;
-    --popover: #1c1436;
-    --popover-foreground: #f3f0ff;
-    --primary: #8b5cf6;
-    --primary-foreground: #ffffff;
-    --secondary: #241a45;
-    --secondary-foreground: #f3f0ff;
-    --muted: #241a45;
-    --muted-foreground: #a49dc2;
-    --accent: #2d2054;
-    --accent-foreground: #ddd0ff;
-    --destructive: #f43f5e;
+    --background: #08060c;
+    --foreground: #f3ecf7;
+    --card: #120e1a;
+    --card-foreground: #f3ecf7;
+    --popover: #14101d;
+    --popover-foreground: #f3ecf7;
+    --primary: #b8f04a;
+    --primary-foreground: #101505;
+    --secondary: #1a1526;
+    --secondary-foreground: #f3ecf7;
+    --muted: #1a1526;
+    --muted-foreground: #9c94ab;
+    --accent: #221a33;
+    --accent-foreground: #d9c9ff;
+    --destructive: #fb5c78;
     --destructive-foreground: #ffffff;
-    --border: #2e2352;
-    --input: #2e2352;
-    --ring: #8b5cf6;
+    --border: #241d33;
+    --input: #241d33;
+    --ring: #b8f04a;
 
-    --brand: #8b5cf6;
+    --brand: #b8f04a;
+    --lavender: #c9b6ff;
     --safe: #2ee59d;
     --warn: #f5a524;
     --risk: #fb5c78;
 
-    --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-card: 0 4px 24px -4px rgba(0, 0, 0, 0.7), 0 2px 6px -1px rgba(0, 0, 0, 0.4);
   }
 }
 
 :root[data-theme="dark"] {
-  --background: #120c22;
-  --foreground: #f3f0ff;
-  --card: #1c1436;
-  --card-foreground: #f3f0ff;
-  --popover: #1c1436;
-  --popover-foreground: #f3f0ff;
-  --primary: #8b5cf6;
-  --primary-foreground: #ffffff;
-  --secondary: #241a45;
-  --secondary-foreground: #f3f0ff;
-  --muted: #241a45;
-  --muted-foreground: #a49dc2;
-  --accent: #2d2054;
-  --accent-foreground: #ddd0ff;
-  --destructive: #f43f5e;
+  --background: #08060c;
+  --foreground: #f3ecf7;
+  --card: #120e1a;
+  --card-foreground: #f3ecf7;
+  --popover: #14101d;
+  --popover-foreground: #f3ecf7;
+  --primary: #b8f04a;
+  --primary-foreground: #101505;
+  --secondary: #1a1526;
+  --secondary-foreground: #f3ecf7;
+  --muted: #1a1526;
+  --muted-foreground: #9c94ab;
+  --accent: #221a33;
+  --accent-foreground: #d9c9ff;
+  --destructive: #fb5c78;
   --destructive-foreground: #ffffff;
-  --border: #2e2352;
-  --input: #2e2352;
-  --ring: #8b5cf6;
+  --border: #241d33;
+  --input: #241d33;
+  --ring: #b8f04a;
 
-  --brand: #8b5cf6;
+  --brand: #b8f04a;
+  --lavender: #c9b6ff;
   --safe: #2ee59d;
   --warn: #f5a524;
   --risk: #fb5c78;
 
-  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 4px 24px -4px rgba(0, 0, 0, 0.7), 0 2px 6px -1px rgba(0, 0, 0, 0.4);
 }
+
 
 :root[data-theme="light"] {
   color-scheme: light;
