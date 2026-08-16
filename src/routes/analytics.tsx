@@ -65,10 +65,10 @@ function Analytics() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Txns analysed" value="18.94M" sub="lifetime" accent="cyan" />
-        <StatTile label="Fraud detected" value="41,208" sub="0.22% base rate" accent="risk" delay={0.05} />
-        <StatTile label="False positive rate" value="0.71%" sub="↓ 0.14 wk/wk" accent="safe" delay={0.1} />
-        <StatTile label="Avg. latency" value="11.4 ms" sub="consensus path" accent="violet" delay={0.15} />
+        <StatTile label="Txns analysed" value="1,026,867" sub="BCCC dataset" accent="cyan" />
+        <StatTile label="Fraud detected" value="88,824" sub="8.65% base rate" accent="risk" delay={0.05} />
+        <StatTile label="Unique wallets" value="4,324" sub="wallet-grouped" accent="safe" delay={0.1} />
+        <StatTile label="Avg. latency" value="2.6 ms" sub="consensus path" accent="violet" delay={0.15} />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">

@@ -1,10 +1,26 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Download, RotateCw, Search } from "lucide-react";
-import { toast } from "sonner";
 import { ModuleShell, PageHeader, Panel, RiskBadge, short } from "@/components/ui-kit";
-import { HISTORY } from "@/lib/platform-data";
+import { levelFromVerdict, type RiskLevel } from "@/lib/platform-data";
+import { apiFetch } from "@/lib/api";
+import { downloadCsv } from "@/lib/export";
+
+interface HistoryRow {
+  id: string;
+  hash: string;
+  model: string;
+  risk: number;
+  level: RiskLevel;
+  confidence: number;
+  mode: string;
+  at: string;
+  fromAddress: string;
+  toAddress: string;
+  valueEth: number;
+  verdict: string;
+}
 
 export const Route = createFileRoute("/history")({
   head: () => ({
@@ -30,10 +46,39 @@ const FILTERS = ["all", "safe", "elevated", "high"] as const;
 function History() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
+  const [dataRows, setDataRows] = useState<HistoryRow[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch<any>("/api/v1/history")
+      .then(({ ok, data, error }) => {
+        if (ok && data?.history) {
+          const apiRows: HistoryRow[] = data.history.map((h: any) => ({
+            id: h.id,
+            hash: h.hash,
+            model: h.model,
+            risk: h.risk,
+            level: levelFromVerdict(h.verdict, h.risk),
+            confidence: h.confidence,
+            mode: h.mode,
+            at: h.at,
+            fromAddress: h.from_address ?? "",
+            toAddress: h.to_address ?? "",
+            valueEth: h.value_eth ?? 0,
+            verdict: h.verdict ?? "",
+          }));
+          setDataRows(apiRows);
+        } else {
+          setLoadError(error);
+        }
+      })
+      .finally(() => setLoaded(true));
+  }, []);
 
   const rows = useMemo(
     () =>
-      HISTORY.filter(
+      dataRows.filter(
         (h) =>
           (filter === "all" || h.level === filter) &&
           (query === "" ||
@@ -41,8 +86,16 @@ function History() {
             h.model.toLowerCase().includes(query.toLowerCase()) ||
             h.id.toLowerCase().includes(query.toLowerCase())),
       ),
-    [query, filter],
+    [dataRows, query, filter],
   );
+
+  const exportCsv = () => {
+    downloadCsv(
+      `aegis_history_${Date.now()}.csv`,
+      ["id", "hash", "model", "mode", "risk", "verdict", "confidence", "from_address", "to_address", "value_eth", "at"],
+      rows.map((h) => [h.id, h.hash, h.model, h.mode, h.risk, h.verdict, h.confidence, h.fromAddress, h.toAddress, h.valueEth, h.at]),
+    );
+  };
 
   return (
     <ModuleShell>
@@ -52,8 +105,9 @@ function History() {
         description="A complete ledger of past analyses with the model used, resulting risk, confidence and mode. Re-run any entry against the current ensemble in one click."
         aside={
           <button
-            onClick={() => toast.success("history_export.csv queued", { description: `${rows.length} records` })}
-            className="inline-flex items-center gap-2 rounded-full glass-soft px-5 py-2.5 text-sm transition hover:bg-white/8"
+            onClick={exportCsv}
+            disabled={rows.length === 0}
+            className="inline-flex items-center gap-2 rounded-full glass-soft px-5 py-2.5 text-sm transition hover:bg-white/8 disabled:opacity-50"
           >
             <Download className="h-4 w-4" /> Export CSV
           </button>
@@ -89,6 +143,14 @@ function History() {
           </div>
         </div>
 
+        {loaded && rows.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 px-6 py-16 text-center text-muted-foreground">
+            <p className="text-sm">{loadError ? "Could not load history." : "No transactions analysed yet."}</p>
+            <p className="text-xs">
+              {loadError ?? "Run a detection from the Fraud Detection or Batch page to populate this ledger."}
+            </p>
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-xs">
             <thead className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -123,18 +185,20 @@ function History() {
                     {new Date(h.at).toLocaleString()}
                   </td>
                   <td className="px-6 py-3.5">
-                    <button
-                      onClick={() => toast(`Re-running ${h.id}`, { description: `${h.model} · consensus path` })}
+                    <Link
+                      to="/detect"
+                      search={{ from: h.fromAddress, to: h.toAddress, value: String(h.valueEth) }}
                       className="inline-flex items-center gap-1.5 rounded-full glass-soft px-3 py-1.5 text-[11px] transition hover:bg-white/10"
                     >
                       <RotateCw className="h-3 w-3" /> Re-run
-                    </button>
+                    </Link>
                   </td>
                 </motion.tr>
               ))}
             </tbody>
           </table>
         </div>
+        )}
       </Panel>
     </ModuleShell>
   );

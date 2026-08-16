@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useState } from "react";
-import { UploadCloud, FileSpreadsheet, Play } from "lucide-react";
-import { ModuleShell, PageHeader, Panel, RiskBadge, StatTile, short } from "@/components/ui-kit";
-import { levelFromRisk, randomHash } from "@/lib/platform-data";
+import { UploadCloud, FileSpreadsheet, Play, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { ModuleShell, PageHeader, Panel, RiskBadge, StatTile } from "@/components/ui-kit";
+import { levelFromVerdict } from "@/lib/platform-data";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/batch")({
   head: () => ({
@@ -12,7 +14,7 @@ export const Route = createFileRoute("/batch")({
       {
         name: "description",
         content:
-          "Upload a CSV of Ethereum transactions and score thousands of rows at once with per-row risk levels and exportable batch summaries.",
+          "Upload a CSV of Ethereum transactions and score every row through the primary ensemble with real per-row verdicts and an exportable batch summary.",
       },
       { property: "og:title", content: "Batch Detection — Aegis" },
       {
@@ -25,45 +27,83 @@ export const Route = createFileRoute("/batch")({
 });
 
 interface Row {
-  hash: string;
+  rowIndex: number;
   risk: number;
+  verdict: string;
 }
+
+interface BatchSummary {
+  total_rows: number;
+  flagged_fraud_count: number;
+  legitimate_count: number;
+  average_risk_score: number;
+}
+
+const DEMO_CSV_URL = "/demo/demo_batch_sample.csv";
 
 function Batch() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [summary, setSummary] = useState<BatchSummary | null>(null);
   const [progress, setProgress] = useState(0);
   const [running, setRunning] = useState(false);
   const [file, setFile] = useState<string | null>(null);
+  const [fileObject, setFileObject] = useState<File | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const start = () => {
+  const start = async () => {
+    if (!fileObject) return;
     setRows([]);
-    setProgress(0);
+    setSummary(null);
+    setErrorMsg(null);
+    setProgress(25);
     setRunning(true);
-    setFile(file ?? "mainnet_batch_q3.csv");
-    let n = 0;
-    const total = 48;
-    const id = setInterval(() => {
-      n += 1;
-      setProgress(Math.round((n / total) * 100));
-      setRows((prev) => [
-        { hash: randomHash(), risk: Number((Math.random() * 100).toFixed(1)) },
-        ...prev,
-      ]);
-      if (n >= total) {
-        clearInterval(id);
-        setRunning(false);
-      }
-    }, 90);
+
+    const formData = new FormData();
+    formData.append("file", fileObject);
+    const { ok, data, error } = await apiFetch<any>("/api/v1/batch/upload", {
+      method: "POST",
+      body: formData,
+    });
+    setProgress(100);
+
+    if (ok && data?.row_scores) {
+      setRows(
+        data.row_scores.map((r: any) => ({
+          rowIndex: r.row_index,
+          risk: Number((r.risk_score * 100).toFixed(1)),
+          verdict: r.verdict,
+        })),
+      );
+      setSummary(data.batch_summary ?? null);
+    } else {
+      setErrorMsg(error || "The backend returned an unexpected response shape.");
+    }
+    setRunning(false);
   };
 
-  const flagged = rows.filter((r) => r.risk > 38).length;
+  const loadDemo = async () => {
+    try {
+      const res = await fetch(DEMO_CSV_URL);
+      if (!res.ok) throw new Error(`${res.status}`);
+      const blob = await res.blob();
+      const f = new File([blob], "demo_batch_sample.csv", { type: "text/csv" });
+      setFileObject(f);
+      setFile(f.name);
+    } catch {
+      toast.error("Could not load the bundled demo CSV.");
+    }
+  };
+
+  const scored = summary?.total_rows ?? rows.length;
+  const flagged = summary?.flagged_fraud_count ?? rows.filter((r) => levelFromVerdict(r.verdict) !== "safe").length;
+  const truncated = summary ? summary.total_rows > rows.length : false;
 
   return (
     <ModuleShell>
       <PageHeader
         eyebrow="Batch detection"
         title="Thousands of transactions. One pass."
-        description="Drop a CSV export from any indexer. Aegis maps columns automatically, scores every row through the primary ensemble and streams results as they complete."
+        description="Drop a CSV export from any indexer, or load the bundled held-out sample. Aegis scores every row through the primary ensemble with real per-row verdicts."
       />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
@@ -73,13 +113,17 @@ function Batch() {
               <UploadCloud className="h-7 w-7 text-cyan transition group-hover:-translate-y-1" strokeWidth={1.5} />
               <span className="mt-4 text-sm font-medium">Drop your CSV here</span>
               <span className="mt-1 text-xs text-muted-foreground">
-                hash, from, to, value, gas, timestamp
+                a raw-transaction CSV, or a pre-engineered 61-feature matrix
               </span>
               <input
                 type="file"
                 accept=".csv"
                 className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0]?.name ?? null)}
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setFileObject(f);
+                  setFile(f?.name ?? null);
+                }}
               />
             </label>
             {file ? (
@@ -88,13 +132,23 @@ function Batch() {
                 <span className="font-mono">{file}</span>
               </div>
             ) : null}
-            <button
-              onClick={start}
-              disabled={running}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-foreground px-6 py-3.5 text-sm font-medium text-background transition hover:scale-[1.01] disabled:opacity-50"
-            >
-              <Play className="h-4 w-4" /> {running ? `Scoring ${progress}%` : "Run batch analysis"}
-            </button>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={start}
+                disabled={running || !fileObject}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-foreground px-6 py-3.5 text-sm font-medium text-background transition hover:scale-[1.01] disabled:opacity-50"
+              >
+                <Play className="h-4 w-4" /> {running ? `Scoring ${progress}%` : "Run batch analysis"}
+              </button>
+              <button
+                onClick={loadDemo}
+                disabled={running}
+                title="Load a real 3,000-row held-out sample (8.6% fraud rate)"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl glass-soft px-5 py-3.5 text-sm font-medium transition hover:bg-white/8 disabled:opacity-50"
+              >
+                <Sparkles className="h-4 w-4" /> Load demo CSV
+              </button>
+            </div>
             <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/8">
               <motion.div
                 animate={{ width: `${progress}%` }}
@@ -106,32 +160,43 @@ function Batch() {
           </Panel>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <StatTile label="Rows scored" value={String(rows.length)} accent="cyan" />
+            <StatTile label="Rows scored" value={String(scored)} accent="cyan" />
             <StatTile label="Flagged" value={String(flagged)} accent="risk" delay={0.05} />
           </div>
         </div>
 
         <Panel delay={0.1} className="p-0">
-          <div className="border-b border-white/8 px-6 py-4 text-sm font-semibold">Batch results</div>
+          <div className="flex items-center justify-between border-b border-white/8 px-6 py-4">
+            <span className="text-sm font-semibold">Batch results</span>
+            {truncated ? (
+              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                showing first {rows.length} of {summary!.total_rows}
+              </span>
+            ) : null}
+          </div>
           <div className="max-h-[560px] overflow-y-auto">
-            {rows.length === 0 ? (
+            {errorMsg ? (
+              <p className="px-6 py-16 text-center text-xs text-risk">{errorMsg}</p>
+            ) : rows.length === 0 ? (
               <p className="px-6 py-16 text-center text-xs text-muted-foreground">
-                Results stream in row by row as the ensemble completes each prediction.
+                Results appear here once a batch finishes scoring.
               </p>
             ) : (
               rows.map((r) => (
                 <motion.div
-                  key={r.hash}
+                  key={r.rowIndex}
                   layout
                   initial={{ opacity: 0, y: -12 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-center gap-4 border-b border-white/5 px-6 py-3"
                 >
-                  <span className="font-mono text-[11px]">{short(r.hash)}</span>
+                  <span className="font-mono text-[11px] text-muted-foreground">
+                    row #{r.rowIndex}
+                  </span>
                   <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
                     {r.risk.toFixed(1)}
                   </span>
-                  <RiskBadge level={levelFromRisk(r.risk)} />
+                  <RiskBadge level={levelFromVerdict(r.verdict)} />
                 </motion.div>
               ))
             )}

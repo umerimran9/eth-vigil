@@ -58,7 +58,6 @@ function ModelPage() {
   const { model } = Route.useLoaderData();
   const roc = rocCurve(model.rocAuc);
   const pr = prCurve(model.prAuc);
-  const cm = model.confusion;
 
   return (
     <ModuleShell>
@@ -143,36 +142,6 @@ function ModelPage() {
                 />
               </LineChart>
             </ResponsiveContainer>
-          </div>
-        </Panel>
-
-        <Panel delay={0.25}>
-          <h2 className="text-sm font-semibold">Confusion matrix</h2>
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            {[
-              ["True negative", cm.tn, "safe"],
-              ["False positive", cm.fp, "warn"],
-              ["False negative", cm.fn, "risk"],
-              ["True positive", cm.tp, "electric"],
-            ].map(([label, value, tone], i) => (
-              <motion.div
-                key={label as string}
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 + i * 0.07 }}
-                className="rounded-2xl border border-white/8 bg-white/3 p-5"
-              >
-                <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  {label as string}
-                </div>
-                <div
-                  className="mt-2 font-display text-2xl font-semibold tabular-nums"
-                  style={{ color: `var(--${tone === "warn" ? "warn" : tone})` }}
-                >
-                  {(value as number).toLocaleString()}
-                </div>
-              </motion.div>
-            ))}
           </div>
         </Panel>
 

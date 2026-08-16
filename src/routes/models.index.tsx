@@ -60,7 +60,7 @@ function Models() {
 
               <dl className="mt-7 grid grid-cols-3 gap-3 border-t border-white/8 pt-5">
                 {[
-                  ["Accuracy", `${(m.accuracy * 100).toFixed(1)}%`],
+                  ["PR AUC", m.prAuc.toFixed(3)],
                   ["ROC AUC", m.rocAuc.toFixed(3)],
                   ["Latency", `${m.latencyMs} ms`],
                 ].map(([k, v]) => (

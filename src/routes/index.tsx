@@ -3,7 +3,6 @@ import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { ArrowUpRight, Command, ShieldCheck, Zap } from "lucide-react";
 import { AiCore } from "@/components/ai-core";
-import { NAV } from "@/components/nav-dock";
 import { MODELS } from "@/lib/platform-data";
 
 export const Route = createFileRoute("/")({
@@ -13,13 +12,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Aegis monitors Ethereum in real time and scores every transaction with a seven-model AI consensus engine, SHAP explainability and instant risk reporting.",
+          "Aegis monitors Ethereum in real time and scores every transaction with a six-model AI consensus engine, feature attribution and instant risk reporting.",
       },
       { property: "og:title", content: "Aegis — AI Ethereum Fraud Detection Command Center" },
       {
         property: "og:description",
         content:
-          "Real-time Ethereum monitoring with a seven-model AI consensus engine, explainable risk scoring and enterprise reporting.",
+          "Real-time Ethereum monitoring with a six-model AI consensus engine, explainable risk scoring and enterprise reporting.",
       },
     ],
   }),
@@ -33,15 +32,24 @@ const CAPABILITIES = [
     icon: Zap,
   },
   {
-    title: "Seven models, one verdict",
-    body: "Gradient boosting, deep tabular transformers and linear baselines vote inside the Consensus Engine.",
+    title: "Six models, one verdict",
+    body: "Gradient boosting, an attentive tabular network and linear baselines vote inside the Consensus Engine.",
     icon: ShieldCheck,
   },
   {
     title: "Explainable by construction",
-    body: "SHAP attributions and natural-language reasoning accompany every single prediction we emit.",
+    body: "Feature attribution and a recommended action accompany every single prediction we emit.",
     icon: Command,
   },
+];
+
+const HOW_IT_WORKS = [
+  { step: "01", label: "Enter a transaction", body: "Paste a hash or enter from/to/value/gas directly." },
+  { step: "02", label: "Look up wallet data", body: "A live per-wallet token lookup runs against Etherscan." },
+  { step: "03", label: "Derive features", body: "The raw transaction becomes a 61-feature vector." },
+  { step: "04", label: "Score the ensemble", body: "All six production models score the vector independently." },
+  { step: "05", label: "Compute consensus", body: "Votes are combined into one risk score and agreement figure." },
+  { step: "06", label: "Verdict & action", body: "A verdict, feature attribution and a recommended action ship together." },
 ];
 
 function Landing() {
@@ -69,7 +77,7 @@ function Landing() {
             className="mx-auto inline-flex items-center gap-2 rounded-full glass-soft px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan/85"
           >
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" />
-            Core online · 7 models synced
+            Core online · 6 models synced
           </motion.div>
 
           <motion.h1
@@ -87,8 +95,8 @@ function Landing() {
             transition={{ delay: 0.55, duration: 0.9 }}
             className="mx-auto mt-7 max-w-xl text-[15px] leading-relaxed text-muted-foreground sm:text-base"
           >
-            Aegis watches the chain, reasons about intent, and tells you why. A command center for
-            fraud detection — not a dashboard.
+            Aegis watches the chain, reasons about intent, and tells you why. An investigation
+            platform for Ethereum fraud — not a dashboard.
           </motion.p>
 
           <motion.div
@@ -98,17 +106,17 @@ function Landing() {
             className="mt-10 flex flex-wrap items-center justify-center gap-3"
           >
             <Link
-              to="/monitor"
+              to="/detect"
               className="group inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:scale-[1.03] hover:shadow-[0_18px_50px_-16px_var(--signal-green)]"
             >
-              Enter the command center
+              Analyze a transaction
               <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
             <Link
-              to="/consensus"
+              to="/monitor"
               className="inline-flex items-center gap-2 rounded-full glass-soft px-6 py-3 text-sm font-medium transition hover:scale-[1.03] hover:bg-white/8"
             >
-              See the consensus engine
+              Watch the live feed
             </Link>
           </motion.div>
 
@@ -119,10 +127,10 @@ function Landing() {
             className="mt-14 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4"
           >
             {[
-              ["98.7%", "Peak accuracy"],
-              ["4 ms", "Median inference"],
-              ["18.9M", "Txns scored"],
-              ["7", "Ensemble models"],
+              ["0.9656", "Peak ROC-AUC"],
+              ["0.3 ms", "Min inference"],
+              ["1.02M", "Dataset rows"],
+              [String(MODELS.length), "Ensemble models"],
             ].map(([v, l]) => (
               <div key={l}>
                 <div className="font-display text-2xl font-semibold tabular-nums">{v}</div>
@@ -162,69 +170,33 @@ function Landing() {
           viewport={{ once: true }}
           className="max-w-xl text-3xl font-semibold sm:text-4xl"
         >
-          Eleven workspaces. One continuous surface.
+          One investigation, start to finish.
         </motion.h2>
         <p className="mt-4 max-w-lg text-sm text-muted-foreground">
-          Switching never reloads a page — the workspace morphs around you. Press{" "}
-          <kbd className="rounded-md border border-white/12 px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>{" "}
-          anywhere.
+          Every transaction that reaches Aegis moves through the same six steps, on one screen.
         </p>
-        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {NAV.filter((n) => n.to !== "/").map((n, i) => (
+        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {HOW_IT_WORKS.map((s, i) => (
             <motion.div
-              key={n.to}
-              initial={{ opacity: 0, scale: 0.96 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              key={s.step}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.06 }}
+              className="rounded-2xl glass-soft p-5"
             >
-              <Link
-                to={n.to}
-                className="group flex h-full items-center gap-3 rounded-2xl glass-soft p-5 transition hover:-translate-y-1 hover:bg-white/8"
-              >
-                <n.icon className="h-4 w-4 text-electric" strokeWidth={1.7} />
-                <span className="text-sm font-medium">{n.label}</span>
-                <ArrowUpRight className="ml-auto h-3.5 w-3.5 opacity-0 transition group-hover:opacity-60" />
-              </Link>
+              <span className="font-mono text-[11px] text-cyan/80">{s.step}</span>
+              <div className="mt-2 text-sm font-medium">{s.label}</div>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{s.body}</p>
             </motion.div>
           ))}
         </div>
-      </section>
-
-      <section className="mx-auto max-w-[1400px] px-5 pb-48 sm:px-8">
-        <div className="rounded-[2rem] glass-panel p-8 sm:p-12">
-          <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-cyan/80">
-            The ensemble
-          </p>
-          <h2 className="mt-4 max-w-xl text-3xl font-semibold sm:text-4xl">
-            Seven independent minds, cross-examined in 42 ms.
-          </h2>
-          <div className="mt-10 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {MODELS.map((m, i) => (
-              <motion.div
-                key={m.id}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06 }}
-              >
-                <Link
-                  to="/models/$modelId"
-                  params={{ modelId: m.id }}
-                  className="group block rounded-2xl border border-white/8 bg-white/3 p-5 transition hover:-translate-y-1 hover:border-cyan/30"
-                >
-                  <div className="flex items-baseline justify-between">
-                    <span className="font-display text-base font-semibold">{m.name}</span>
-                    <span className="font-mono text-[11px] text-safe tabular-nums">
-                      {(m.accuracy * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{m.tagline}</p>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+        <Link
+          to="/detect"
+          className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-cyan hover:text-cyan/80"
+        >
+          Try it now <ArrowUpRight className="h-3.5 w-3.5" />
+        </Link>
       </section>
     </main>
   );

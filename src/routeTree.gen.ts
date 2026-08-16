@@ -12,9 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as BatchRouteImport } from './routes/batch'
-import { Route as ConsensusRouteImport } from './routes/consensus'
 import { Route as DetectRouteImport } from './routes/detect'
-import { Route as ExplainRouteImport } from './routes/explain'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as MonitorRouteImport } from './routes/monitor'
 import { Route as ReportsRouteImport } from './routes/reports'
@@ -37,19 +35,9 @@ const BatchRoute = BatchRouteImport.update({
   path: '/batch',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ConsensusRoute = ConsensusRouteImport.update({
-  id: '/consensus',
-  path: '/consensus',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DetectRoute = DetectRouteImport.update({
   id: '/detect',
   path: '/detect',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExplainRoute = ExplainRouteImport.update({
-  id: '/explain',
-  path: '/explain',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -87,9 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
-  '/consensus': typeof ConsensusRoute
   '/detect': typeof DetectRoute
-  '/explain': typeof ExplainRoute
   '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
@@ -101,9 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
-  '/consensus': typeof ConsensusRoute
   '/detect': typeof DetectRoute
-  '/explain': typeof ExplainRoute
   '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
@@ -116,9 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
-  '/consensus': typeof ConsensusRoute
   '/detect': typeof DetectRoute
-  '/explain': typeof ExplainRoute
   '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
   '/reports': typeof ReportsRoute
@@ -132,9 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/batch'
-    | '/consensus'
     | '/detect'
-    | '/explain'
     | '/history'
     | '/monitor'
     | '/reports'
@@ -146,9 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/batch'
-    | '/consensus'
     | '/detect'
-    | '/explain'
     | '/history'
     | '/monitor'
     | '/reports'
@@ -160,9 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/batch'
-    | '/consensus'
     | '/detect'
-    | '/explain'
     | '/history'
     | '/monitor'
     | '/reports'
@@ -175,9 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   BatchRoute: typeof BatchRoute
-  ConsensusRoute: typeof ConsensusRoute
   DetectRoute: typeof DetectRoute
-  ExplainRoute: typeof ExplainRoute
   HistoryRoute: typeof HistoryRoute
   MonitorRoute: typeof MonitorRoute
   ReportsRoute: typeof ReportsRoute
@@ -209,25 +183,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BatchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/consensus': {
-      id: '/consensus'
-      path: '/consensus'
-      fullPath: '/consensus'
-      preLoaderRoute: typeof ConsensusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/detect': {
       id: '/detect'
       path: '/detect'
       fullPath: '/detect'
       preLoaderRoute: typeof DetectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/explain': {
-      id: '/explain'
-      path: '/explain'
-      fullPath: '/explain'
-      preLoaderRoute: typeof ExplainRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -279,9 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   BatchRoute: BatchRoute,
-  ConsensusRoute: ConsensusRoute,
   DetectRoute: DetectRoute,
-  ExplainRoute: ExplainRoute,
   HistoryRoute: HistoryRoute,
   MonitorRoute: MonitorRoute,
   ReportsRoute: ReportsRoute,
@@ -292,3 +250,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
