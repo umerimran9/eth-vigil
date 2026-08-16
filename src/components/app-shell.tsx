@@ -132,7 +132,6 @@ function ThemeToggle() {
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
-  const [hovered, setHovered] = useState<string | null>(null);
 
   return (
     <nav className="flex h-full flex-col justify-between p-4">
