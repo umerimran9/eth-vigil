@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   AlertTriangle,
+  ArrowLeft,
   ArrowRightLeft,
   CheckCircle2,
   Copy,
@@ -35,6 +36,7 @@ interface DetectSearch {
   value?: string | undefined;
   gas?: string | undefined;
   hash?: string | undefined;
+  auto?: string | undefined;
 }
 
 export const Route = createFileRoute("/detect")({
@@ -54,6 +56,7 @@ export const Route = createFileRoute("/detect")({
         ? String(search["gas"])
         : undefined,
     hash: typeof search["hash"] === "string" ? search["hash"] : undefined,
+    auto: typeof search["auto"] === "string" ? search["auto"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -218,13 +221,36 @@ function Detect() {
   const [gasUsed, setGasUsed] = useState(search.gas !== undefined ? search.gas : PRESETS[0].gasUsed);
   const [hash, setHash] = useState(search.hash ?? "");
 
+  const hasAutoRunRef = useRef(false);
+
   useEffect(() => {
     if (search.from !== undefined) setFromAddr(search.from);
     if (search.to !== undefined) setToAddr(search.to);
     if (search.value !== undefined) setValueEth(search.value);
     if (search.gas !== undefined) setGasUsed(search.gas);
     if (search.hash !== undefined) setHash(search.hash);
-  }, [search.from, search.to, search.value, search.gas, search.hash]);
+
+    if (search.auto === "true" && !hasAutoRunRef.current && search.from) {
+      hasAutoRunRef.current = true;
+      const v = search.value !== undefined ? search.value : valueEth;
+      const g = search.gas !== undefined ? search.gas : gasUsed;
+      const valWei = Math.round(parseFloat(v || "0") * 1e18);
+      const gUsed = parseInt(g || "21000", 10);
+      const payload = {
+        hash: search.hash ?? (hash.trim() || "0x" + "0".repeat(64)),
+        from_address: search.from,
+        to_address: search.to ?? toAddr ?? "0x0000000000000000000000000000000000000000",
+        value: valWei,
+        gas: gUsed,
+        gas_used: gUsed,
+        effective_gas_price: 24500000000,
+        cumulative_gas_used: 1200000,
+        nonce: 42,
+        model_id: null,
+      };
+      run(payload, "consensus");
+    }
+  }, [search.from, search.to, search.value, search.gas, search.hash, search.auto]);
 
   const [selectedModel, setSelectedModel] = useState<string>("consensus");
   const [stage, setStage] = useState(-1);
@@ -352,6 +378,37 @@ function Detect() {
         title="Interrogate any transaction."
         description="Configure on-chain transaction parameters to evaluate live Etherscan token enrichment, multi-model consensus, real SHAP feature attributions, and forensic verdicts."
       />
+
+      {/* Return to Live Stream Breadcrumb Banner */}
+      {search.hash || (search.from && search.auto === "true") ? (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan/30 bg-cyan/10 px-5 py-3.5 shadow-[0_0_20px_rgba(6,182,212,0.12)]">
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2 font-mono text-xs font-semibold text-foreground">
+                <span>Investigating Live Stream Transaction</span>
+                {search.hash ? (
+                  <span className="rounded bg-white/10 px-2 py-0.5 text-[11px] text-cyan">
+                    {short(search.hash, 8)}
+                  </span>
+                ) : null}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Evaluating live wallet token balances, 6-model ensemble consensus, and exact SHAP attributions.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/monitor"
+            className="inline-flex items-center gap-2 rounded-full border border-cyan/40 bg-cyan/20 px-4 py-2 font-mono text-xs font-medium text-cyan transition hover:bg-cyan/30 hover:shadow-[0_0_14px_rgba(6,182,212,0.25)]"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Return to Live Monitor
+          </Link>
+        </div>
+      ) : null}
 
       {/* Quick-Fill Scenario Presets Bar */}
       <div className="mb-6 flex flex-wrap items-center gap-2">

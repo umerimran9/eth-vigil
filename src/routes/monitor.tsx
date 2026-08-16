@@ -25,105 +25,17 @@ export const Route = createFileRoute("/monitor")({
   component: Monitor,
 });
 
-type WsStatus = "connecting" | "connected" | "waiting" | "disconnected";
-
-interface ModelScoreEntry {
-  probability: number;
-  threshold: number;
-  verdict: string;
-}
-
-interface LiveTxn extends Txn {
-  // Keyed by backend model_id (snake_case), e.g. "random_forest" -- present
-  // when the ingest worker's payload includes registry.predict_all()'s raw
-  // per-model dict alongside the consensus risk_score/verdict.
-  modelScores?: Record<string, ModelScoreEntry>;
-  // True when live_ingest_etherscan.py's per-wallet Etherscan token lookup
-  // found no usable ERC-20 history for this sender -- the 40 erc_20_*/
-  // erc_721_* features were scored as zeros for this transaction.
-  featuresDefaulted?: boolean;
-}
+import { useLiveStreamStore, type LiveTxn, type WsStatus } from "@/lib/stream-store";
 
 // platform-data's MODELS ids are kebab-case (UI convention); the backend's
 // model_scores dict is keyed snake_case (Python convention). Same six models.
 const toBackendId = (id: string) => id.replace(/-/g, "_");
 
 function Monitor() {
-  const [block, setBlock] = useState<number | null>(null);
-  const [recentBlocks, setRecentBlocks] = useState<number[]>([]);
-  const [txns, setTxns] = useState<LiveTxn[]>([]);
+  const { block, recentBlocks, txns, wsStatus, live, toggleLive } = useLiveStreamStore();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<LiveTxn | null>(null);
-  const [live, setLive] = useState(true);
-  const [wsStatus, setWsStatus] = useState<WsStatus>("connecting");
   const [viewModel, setViewModel] = useState<string>("consensus");
-
-  useEffect(() => {
-    if (!live) return;
-    setWsStatus("connecting");
-
-    let ws: WebSocket | null = null;
-    let waitTimer: number | null = null;
-
-    const armWaitTimer = () => {
-      if (waitTimer) window.clearTimeout(waitTimer);
-      // ~12s block time; give the ingest worker a few blocks' grace before
-      // telling the user nothing has arrived yet.
-      waitTimer = window.setTimeout(() => setWsStatus((s) => (s === "connected" ? "waiting" : s)), 20000);
-    };
-
-    try {
-      ws = new WebSocket(`${WS_BASE_URL}/api/v1/stream/live`);
-
-      ws.onopen = () => {
-        setWsStatus("connected");
-        armWaitTimer();
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const payload = JSON.parse(event.data);
-          if (payload && payload.hash) {
-            armWaitTimer();
-            setWsStatus("connected");
-            const riskVal = (payload.risk_score || 0) * 100;
-            const newTx: LiveTxn = {
-              hash: payload.hash,
-              from: payload.from_address || "0x0000...",
-              to: payload.to_address || "0x0000...",
-              value: payload.value_eth || 0,
-              gas: payload.gas || 21000,
-              block: payload.block_number || 0,
-              risk: Number(riskVal.toFixed(1)),
-              level: levelFromVerdict(payload.verdict, riskVal),
-              ts: Date.now(),
-              modelScores: payload.model_scores && typeof payload.model_scores === "object" ? payload.model_scores : undefined,
-              featuresDefaulted: Boolean(payload.features_defaulted),
-            };
-            if (payload.block_number) {
-              setBlock(payload.block_number);
-              setRecentBlocks((prev) =>
-                prev[0] === payload.block_number ? prev : [payload.block_number, ...prev].slice(0, 5),
-              );
-            }
-            setTxns((prev) => [newTx, ...prev].slice(0, 30));
-          }
-        } catch {
-          // ignore malformed frames
-        }
-      };
-
-      ws.onerror = () => setWsStatus("disconnected");
-      ws.onclose = () => setWsStatus("disconnected");
-    } catch {
-      setWsStatus("disconnected");
-    }
-
-    return () => {
-      if (waitTimer) window.clearTimeout(waitTimer);
-      if (ws) ws.close();
-    };
-  }, [live]);
 
   // Re-derives risk/level for the selected view -- "Consensus" reads the
   // backend's own compute_consensus() output already stored on the row; a
@@ -169,7 +81,7 @@ function Monitor() {
         description="Real transactions arrive from tools/live_ingest_etherscan.py, scored the moment they're ingested. Search by wallet, transaction hash or block height."
         aside={
           <button
-            onClick={() => setLive((v) => !v)}
+            onClick={toggleLive}
             className="inline-flex items-center gap-2 rounded-full glass-soft px-5 py-2.5 text-sm transition hover:bg-white/8"
           >
             <Radio className={`h-4 w-4 ${status.dot}`} />
@@ -372,6 +284,7 @@ function Monitor() {
                       value: String(selected.value),
                       gas: String(selected.gas),
                       hash: selected.hash,
+                      auto: "true",
                     }}
                     className="inline-flex items-center gap-1.5 rounded-full glass-soft px-3.5 py-1.5 text-[11px] font-medium transition hover:bg-white/10"
                   >
