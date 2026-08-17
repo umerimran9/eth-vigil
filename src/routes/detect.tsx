@@ -380,6 +380,40 @@ function Detect() {
         eyebrow="Fraud detection"
         title="Interrogate any transaction."
         description="Configure on-chain transaction parameters to evaluate live Etherscan token enrichment, multi-model consensus, real SHAP feature attributions, and forensic verdicts."
+        aside={
+          result ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setPdfModalData({
+                    hash: result.transaction?.hash || hash || "0x" + "0".repeat(64),
+                    from: result.transaction?.from_address || fromAddr,
+                    to: result.transaction?.to_address || toAddr,
+                    value: result.transaction?.value_eth ?? valueEth,
+                    gas: result.transaction?.gas_used ?? gasUsed,
+                    block: result.transaction?.block_number,
+                    risk: result.risk,
+                    level: levelFromVerdict(result.verdict, result.risk),
+                    verdict: result.verdict,
+                    action: result.action,
+                    confidence: result.confidence,
+                    latencyMs: result.ms,
+                    recommendations: result.recommendations,
+                    shapWaterfall: result.shapWaterfall,
+                    featuresDefaulted: result.featuresDefaulted,
+                    modelScores: result.modelScores,
+                    transaction: result.transaction,
+                  })
+                }
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                Export Full Investigation PDF
+              </button>
+            </div>
+          ) : null
+        }
       />
 
       {/* Return to Live Stream Breadcrumb Banner */}
@@ -644,8 +678,14 @@ function Detect() {
                     risk: result.risk,
                     level: levelFromVerdict(result.verdict, result.risk),
                     verdict: result.verdict,
+                    action: result.action,
+                    confidence: result.confidence,
+                    latencyMs: result.ms,
+                    recommendations: result.recommendations,
+                    shapWaterfall: result.shapWaterfall,
                     featuresDefaulted: result.featuresDefaulted,
                     modelScores: result.modelScores,
+                    transaction: result.transaction,
                   })
                 }
               />
