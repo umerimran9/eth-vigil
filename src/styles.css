@@ -236,15 +236,33 @@
   position: relative;
 }
 
-/* High-Resolution Vector Print-to-PDF Styles */
+/* High-Resolution Vector Print-to-PDF Styles (Single-Page Landscape) */
+@page {
+  size: landscape;
+  margin: 6mm 8mm;
+}
+
 @media print {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box !important;
+  }
+
+  html,
   body {
     background-color: #081028 !important;
     color: #f8fafc !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    font-size: 11px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 
+  /* Hide navigation, header buttons, footer, and tables marked no-print */
   nav,
   footer,
   .no-print,
@@ -262,11 +280,27 @@
     page-break-inside: avoid !important;
   }
 
-  /* Ensure cards and charts print with solid backgrounds and clean borders */
+  /* Compact container for landscape single-page export */
+  main,
+  .module-shell {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Ensure cards and charts print with solid dark navy backgrounds and clean borders */
   .bg-card,
   [data-slot="card"],
-  panel {
+  .panel {
     background-color: #111c38 !important;
-    border-color: #1e3258 !important;
+    border: 1px solid #1e3258 !important;
+    box-shadow: none !important;
+  }
+
+  /* Recharts responsive svg sizing */
+  .recharts-responsive-container {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }

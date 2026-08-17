@@ -24,7 +24,7 @@ export function Panel({
             whileHover: { y: -3 },
           }
         : {})}
-      className={cn("rounded-xl border border-border bg-card p-6 shadow-sm", className)}
+      className={cn("rounded-xl border border-border bg-card p-6 shadow-sm print:p-3.5 print:rounded-lg", className)}
     >
       {children}
     </motion.section>
@@ -43,12 +43,12 @@ export function PageHeader({
   aside?: ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-6 pb-8">
+    <header className="flex flex-wrap items-end justify-between gap-6 pb-8 print:pb-2.5 print:gap-2">
       <div className="max-w-2xl">
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="font-mono text-[11px] uppercase tracking-[0.28em] text-cyan"
+          className="font-mono text-[11px] uppercase tracking-[0.28em] text-cyan print:text-[10px]"
         >
           {eyebrow}
         </motion.p>
@@ -56,7 +56,7 @@ export function PageHeader({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl text-foreground"
+          className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl text-foreground print:text-xl print:mt-0.5"
         >
           {title}
         </motion.h1>
@@ -64,12 +64,12 @@ export function PageHeader({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="mt-3 text-sm leading-relaxed text-muted-foreground"
+          className="mt-3 text-sm leading-relaxed text-muted-foreground print:text-xs print:mt-0.5"
         >
           {description}
         </motion.p>
       </div>
-      {aside ? <div className="shrink-0">{aside}</div> : null}
+      {aside ? <div className="shrink-0 no-print">{aside}</div> : null}
     </header>
   );
 }
@@ -80,7 +80,7 @@ export function ModuleShell({ children }: { children: ReactNode }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="mx-auto w-full max-w-[1400px] px-5 pb-40 pt-20 sm:px-8"
+      className="mx-auto w-full max-w-[1400px] px-5 pb-40 pt-20 sm:px-8 print:p-0 print:m-0 print:max-w-none"
     >
       {children}
     </motion.main>
@@ -112,15 +112,15 @@ export function StatTile({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm"
+      className="relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm print:p-2.5 print:rounded-lg"
     >
-      <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+      <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground print:text-[8px]">
         {label}
       </div>
-      <div className={cn("mt-2 font-display text-2xl font-bold tabular-nums sm:text-3xl", tone)}>
+      <div className={cn("mt-2 font-display text-2xl font-bold tabular-nums sm:text-3xl print:text-lg print:mt-0.5", tone)}>
         {value}
       </div>
-      {sub ? <div className="mt-1 text-xs text-muted-foreground">{sub}</div> : null}
+      {sub ? <div className="mt-1 text-xs text-muted-foreground print:text-[9px] print:mt-0">{sub}</div> : null}
     </motion.div>
   );
 }

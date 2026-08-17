@@ -411,7 +411,7 @@ function Analytics() {
       />
 
       {/* Top 4 Stat Tiles */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-4 print:gap-2.5 print:mb-2.5">
         <StatTile label="Analyses" value={String(rows.length)} sub="scored this session" accent="cyan" />
         <StatTile
           label="High Risk"
@@ -436,26 +436,26 @@ function Analytics() {
         />
       </div>
 
-      {/* Main Charts Grid */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      {/* Main Charts Grid (4 Cards in 2x2 Grid) */}
+      <div className="mt-4 grid gap-4 lg:grid-cols-2 print:mt-2.5 print:grid-cols-2 print:gap-2.5 print:break-inside-avoid">
         {/* 1. Verdict Distribution Donut Chart with Center Metric */}
         <Panel delay={0.1}>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Verdict Distribution</h2>
-            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            <h2 className="text-sm font-semibold print:text-xs">Verdict Distribution</h2>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground print:text-[8px]">
               Categorical Breakdown
             </span>
           </div>
 
-          <div className="relative mt-4 h-64">
+          <div className="relative mt-4 h-64 print:mt-1.5 print:h-44">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={verdictDist}
                   dataKey="value"
                   nameKey="name"
-                  innerRadius={65}
-                  outerRadius={95}
+                  innerRadius={60}
+                  outerRadius={90}
                   paddingAngle={4}
                   stroke="none"
                 >
@@ -463,17 +463,17 @@ function Analytics() {
                     <Cell key={d.name} fill={d.color} />
                   ))}
                 </Pie>
-                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
                 <Tooltip contentStyle={tooltipStyle} />
               </PieChart>
             </ResponsiveContainer>
 
             {/* Centered Metric in Donut Hole */}
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-6">
-              <span className="font-mono text-2xl font-bold text-foreground">
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-5">
+              <span className="font-mono text-2xl font-bold text-foreground print:text-lg">
                 {rows.length}
               </span>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground print:text-[7px]">
                 Total Scored
               </span>
             </div>
@@ -483,20 +483,20 @@ function Analytics() {
         {/* 2. Color-Coded Risk Score Distribution Histogram */}
         <Panel delay={0.15}>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Risk Score Distribution</h2>
-            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            <h2 className="text-sm font-semibold print:text-xs">Risk Score Distribution</h2>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground print:text-[8px]">
               0-100 Histogram
             </span>
           </div>
 
-          <div className="mt-4 h-64">
+          <div className="mt-4 h-64 print:mt-1.5 print:h-44">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={riskHistogram}>
                 <CartesianGrid stroke="#1e3258" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="range" {...axis} />
-                <YAxis {...axis} allowDecimals={false} />
+                <XAxis dataKey="range" {...axis} tick={{ fontSize: 10 }} />
+                <YAxis {...axis} allowDecimals={false} tick={{ fontSize: 10 }} />
                 <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                <Bar dataKey="count" radius={[5, 5, 0, 0]}>
                   {riskHistogram.map((entry, idx) => (
                     <Cell key={`cell-${idx}`} fill={entry.color} />
                   ))}
@@ -510,16 +510,16 @@ function Analytics() {
         <Panel delay={0.2}>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="flex items-center gap-2 text-sm font-semibold">
-                <TrendingUp className="h-4 w-4 text-cyan" /> Risk Trajectory Timeline
+              <h2 className="flex items-center gap-2 text-sm font-semibold print:text-xs">
+                <TrendingUp className="h-4 w-4 text-cyan print:h-3 print:w-3" /> Risk Trajectory Timeline
               </h2>
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1 text-[11px] text-muted-foreground print:text-[9px] print:mt-0">
                 Sequential fraud probability across analyzed transactions (Threshold: 50% Elevated, 85% Fraud).
               </p>
             </div>
           </div>
 
-          <div className="mt-4 h-56">
+          <div className="mt-4 h-56 print:mt-1.5 print:h-38">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={timelineData}>
                 <defs>
@@ -529,10 +529,10 @@ function Analytics() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke="#1e3258" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="index" {...axis} />
-                <YAxis domain={[0, 100]} {...axis} />
-                <ReferenceLine y={50} stroke="#ffb547" strokeDasharray="3 3" label={{ value: "Elevated", fill: "#ffb547", fontSize: 9 }} />
-                <ReferenceLine y={85} stroke="#ff4757" strokeDasharray="3 3" label={{ value: "High Risk", fill: "#ff4757", fontSize: 9 }} />
+                <XAxis dataKey="index" {...axis} tick={{ fontSize: 10 }} />
+                <YAxis domain={[0, 100]} {...axis} tick={{ fontSize: 10 }} />
+                <ReferenceLine y={50} stroke="#ffb547" strokeDasharray="3 3" label={{ value: "Elevated", fill: "#ffb547", fontSize: 8 }} />
+                <ReferenceLine y={85} stroke="#ff4757" strokeDasharray="3 3" label={{ value: "High Risk", fill: "#ff4757", fontSize: 8 }} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Area type="monotone" dataKey="risk" stroke="#0784c3" strokeWidth={2} fillOpacity={1} fill="url(#riskAreaGrad)" />
               </AreaChart>
@@ -544,21 +544,21 @@ function Analytics() {
         <Panel delay={0.25}>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="flex items-center gap-2 text-sm font-semibold">
-                <Layers className="h-4 w-4 text-electric" /> Model Flagging Bias
+              <h2 className="flex items-center gap-2 text-sm font-semibold print:text-xs">
+                <Layers className="h-4 w-4 text-electric print:h-3 print:w-3" /> Model Flagging Bias
               </h2>
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1 text-[11px] text-muted-foreground print:text-[9px] print:mt-0">
                 Individual model fraud detection trigger rate across this session's evaluations.
               </p>
             </div>
           </div>
 
-          <div className="mt-4 h-56">
+          <div className="mt-4 h-56 print:mt-1.5 print:h-38">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={modelFlagStats} layout="vertical" margin={{ left: 20 }}>
+              <BarChart data={modelFlagStats} layout="vertical" margin={{ left: 10 }}>
                 <CartesianGrid stroke="#1e3258" strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" domain={[0, 100]} unit="%" {...axis} />
-                <YAxis dataKey="name" type="category" width={110} {...axis} />
+                <XAxis type="number" domain={[0, 100]} unit="%" {...axis} tick={{ fontSize: 10 }} />
+                <YAxis dataKey="name" type="category" width={95} {...axis} tick={{ fontSize: 9 }} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Bar dataKey="flagRate" name="Flag Rate %" fill="#0784c3" radius={[0, 4, 4, 0]} />
               </BarChart>
@@ -567,8 +567,8 @@ function Analytics() {
         </Panel>
       </div>
 
-      {/* 5. Interactive Recent Scored Transactions Card (Full-width) */}
-      <Panel delay={0.3} className="mt-4 p-0 overflow-hidden">
+      {/* 5. Interactive Recent Scored Transactions Card (Hidden in Print for 1-Page Landscape Output) */}
+      <Panel delay={0.3} className="mt-4 p-0 overflow-hidden no-print">
         <div className="flex items-center justify-between border-b border-border bg-[#0e1832] px-6 py-4">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <Clock className="h-4 w-4 text-cyan" /> Recent Investigations Telemetry

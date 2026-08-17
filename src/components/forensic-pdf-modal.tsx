@@ -62,8 +62,8 @@ export function ForensicPdfModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-border bg-[#081028] p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm print:static print:inset-auto print:p-0 print:bg-transparent print:backdrop-blur-none">
+      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-border bg-[#081028] p-6 shadow-2xl print:max-h-none print:w-full print:max-w-none print:border-none print:bg-transparent print:p-0 print:shadow-none">
         {/* Header Actions (hidden in print) */}
         <div className="no-print mb-4 flex items-center justify-between border-b border-border pb-4">
           <div className="flex items-center gap-2">
