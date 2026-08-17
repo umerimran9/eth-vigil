@@ -166,10 +166,10 @@ function Monitor() {
           delay={0.1}
         />
         <StatTile
-          label="Ensemble"
-          value={`${MODELS.length} models`}
-          sub="scoring every ingested tx"
-          accent="safe"
+          label={viewModel === "consensus" ? "Ensemble" : "Active Model"}
+          value={viewModel === "consensus" ? `${MODELS.length} models` : (MODELS.find((m) => m.id === viewModel)?.name ?? viewModel)}
+          sub={viewModel === "consensus" ? "scoring every ingested tx" : `${MODELS.find((m) => m.id === viewModel)?.family || "Single Model"} view`}
+          accent={viewModel === "consensus" ? "safe" : "cyan"}
           delay={0.15}
         />
       </div>
