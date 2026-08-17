@@ -1,10 +1,49 @@
-# Ethereum Aegis
+# Aegis AI: Ethereum Fraud Detection & SOC Intelligence Gateway
 
-You are a Senior Product Designer, Senior UX Designer, Senior Frontend Engineer, Motion Designer, and Creative Director from Apple, Stripe, Vercel, Linear, and Framer.
+> Complete, lightweight production stack containing the React Frontend, FastAPI Serving Gateway, 6 Preloaded ML Models, and Live Etherscan Ingestion Worker.
 
-Your task is NOT to build a dashboard.
+---
 
-Your task is to create a premium next-generation SaaS platform that feels like a commercial AI cybersecurity product.
+## ⚡ Quickstart on Laptop (Turnkey Execution)
+
+### 1. Clone the repository
+```bash
+git clone -b production-deploy https://github.com/umerimran9/eth-vigil.git
+cd eth-vigil
+```
+
+### 2. Set up Python Environment for Backend
+```bash
+python -m venv .venv
+# On Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+# On Windows Command Prompt:
+.\.venv\Scripts\activate.bat
+
+pip install -r backend/requirements.txt
+```
+
+### 3. Set up Frontend Node Environment
+```bash
+npm install
+```
+
+### 4. Configure Environment (Optional Etherscan API Key)
+Copy `backend/.env.example` to `backend/.env` and add your Etherscan API key:
+```env
+ETHERSCAN_API_KEY=your_key_here
+```
+
+### 5. Launch the Complete Stack
+* **Option A (One-Click Launcher):** Double-click `start_all.bat`
+* **Option B (Separate Terminals):**
+  * **Backend (Port 8000):** `start_backend.bat` (or `cd backend && python -m uvicorn WebApp.app:app --host 127.0.0.1 --port 8000`)
+  * **Frontend (Port 3000):** `start_frontend.bat` (or `npm run dev -- --port 3000`)
+  * **Live Ingestion:** `start_live_ingest.bat` (or `cd backend && python tools/live_ingest_etherscan.py`)
+
+* **Open the Web UI:** [http://localhost:3000](http://localhost:3000)
+
+---
 
 ====================================================
 

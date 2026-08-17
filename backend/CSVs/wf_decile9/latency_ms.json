@@ -1,0 +1,30 @@
+{
+  "xgboost": {
+    "p50_ms": 1.01,
+    "p90_ms": 1.28
+  },
+  "lightgbm": {
+    "p50_ms": 0.9,
+    "p90_ms": 1.19
+  },
+  "random_forest": {
+    "p50_ms": 40.2,
+    "p90_ms": 41.34
+  },
+  "logistic_regression": {
+    "p50_ms": 0.24,
+    "p90_ms": 0.26
+  },
+  "tabnet": {
+    "p50_ms": 16.15,
+    "p90_ms": 17.24
+  },
+  "mlp": {
+    "p50_ms": 0.55,
+    "p90_ms": 0.66
+  },
+  "transformer": {
+    "p50_ms": 1.22,
+    "p90_ms": 1.41
+  }
+}
