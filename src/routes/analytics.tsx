@@ -514,7 +514,7 @@ function Analytics() {
                 <TrendingUp className="h-4 w-4 text-cyan print:h-3 print:w-3" /> Risk Trajectory Timeline
               </h2>
               <p className="mt-1 text-[11px] text-muted-foreground print:text-[9px] print:mt-0">
-                Sequential fraud probability across analyzed transactions (Threshold: 50% Elevated, 85% Fraud).
+                Sequential fraud probability across analyzed transactions (Threshold: 50% Medium, 85% High Risk).
               </p>
             </div>
           </div>
@@ -531,7 +531,7 @@ function Analytics() {
                 <CartesianGrid stroke="#1e3258" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="index" {...axis} tick={{ fontSize: 10 }} />
                 <YAxis domain={[0, 100]} {...axis} tick={{ fontSize: 10 }} />
-                <ReferenceLine y={50} stroke="#ffb547" strokeDasharray="3 3" label={{ value: "Elevated", fill: "#ffb547", fontSize: 8 }} />
+                <ReferenceLine y={50} stroke="#ffb547" strokeDasharray="3 3" label={{ value: "Medium", fill: "#ffb547", fontSize: 8 }} />
                 <ReferenceLine y={85} stroke="#ff4757" strokeDasharray="3 3" label={{ value: "High Risk", fill: "#ff4757", fontSize: 8 }} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Area type="monotone" dataKey="risk" stroke="#0784c3" strokeWidth={2} fillOpacity={1} fill="url(#riskAreaGrad)" />

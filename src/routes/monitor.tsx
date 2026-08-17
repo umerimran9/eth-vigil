@@ -164,7 +164,7 @@ function Monitor() {
         <StatTile
           label="Flagged"
           value={String(flagged)}
-          sub={viewModel === "consensus" ? "elevated or high risk" : `by ${MODELS.find((m) => m.id === viewModel)?.name}`}
+          sub={viewModel === "consensus" ? "medium or high risk" : `by ${MODELS.find((m) => m.id === viewModel)?.name}`}
           accent="risk"
           delay={0.1}
         />
@@ -382,7 +382,7 @@ function Monitor() {
 
                         {/* Verdict Badge */}
                         <td className="px-4 py-3.5 text-center">
-                          <RiskBadge level={d.level} label={d.level === "safe" ? "Clear" : d.level} />
+                          <RiskBadge level={d.level} label={d.level === "safe" ? "Clear" : d.level === "elevated" ? "Medium" : "High Risk"} />
                         </td>
 
                         {/* Expand Action Arrow */}

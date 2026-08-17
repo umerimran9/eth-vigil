@@ -456,7 +456,7 @@ function Batch() {
 
                           {/* Verdict Badge */}
                           <td className="px-4 py-3.5 text-center">
-                            <RiskBadge level={level} label={level === "safe" ? "Clear" : level} />
+                            <RiskBadge level={level} label={level === "safe" ? "Clear" : level === "elevated" ? "Medium" : "High Risk"} />
                           </td>
 
                           {/* Expand chevron */}
