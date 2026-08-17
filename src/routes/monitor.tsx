@@ -1,10 +1,28 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
-import { Search, Blocks, Radio, Terminal, SearchCode, AlertTriangle } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import {
+  Search,
+  Blocks,
+  Radio,
+  Terminal,
+  SearchCode,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  ExternalLink,
+  ShieldAlert,
+  ShieldCheck,
+  Zap,
+} from "lucide-react";
+import { toast } from "sonner";
 import { ModuleShell, PageHeader, Panel, RiskBadge, StatTile, short } from "@/components/ui-kit";
-import { levelFromVerdict, MODELS, type RiskLevel, type Txn } from "@/lib/platform-data";
-import { WS_BASE_URL } from "@/lib/api";
+import { actionLabel, levelFromVerdict, MODELS, type RiskLevel, type Txn } from "@/lib/platform-data";
+import { useLiveStreamStore, type LiveTxn, type WsStatus } from "@/lib/stream-store";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/monitor")({
   head: () => ({
@@ -25,23 +43,26 @@ export const Route = createFileRoute("/monitor")({
   component: Monitor,
 });
 
-import { useLiveStreamStore, type LiveTxn, type WsStatus } from "@/lib/stream-store";
-
 // platform-data's MODELS ids are kebab-case (UI convention); the backend's
 // model_scores dict is keyed snake_case (Python convention). Same six models.
 const toBackendId = (id: string) => id.replace(/-/g, "_");
 
+const copyToClipboard = (text: string, label: string) => {
+  navigator.clipboard?.writeText(text).then(() => toast.success(`${label} copied to clipboard`));
+};
+
 function Monitor() {
   const { block, recentBlocks, txns, wsStatus, live, toggleLive } = useLiveStreamStore();
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<LiveTxn | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
+  const [expandedHash, setExpandedHash] = useState<string | null>(null);
   const [viewModel, setViewModel] = useState<string>("consensus");
 
-  // Re-derives risk/level for the selected view -- "Consensus" reads the
-  // backend's own compute_consensus() output already stored on the row; a
-  // specific model reads that model's own entry from the same payload. No
-  // second calculation, and falls back to consensus if this row's payload
-  // didn't happen to carry that model's score.
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Re-derives risk/level for the selected view
   const displayFor = (t: LiveTxn): { risk: number; level: RiskLevel } => {
     if (viewModel === "consensus") return { risk: t.risk, level: t.level };
     const m = t.modelScores?.[toBackendId(viewModel)];
@@ -51,16 +72,34 @@ function Monitor() {
   };
 
   const filtered = useMemo(() => {
+    let list = txns;
+    if (selectedBlock !== null) {
+      list = list.filter((t) => t.block === selectedBlock);
+    }
     const q = query.trim().toLowerCase();
-    if (!q) return txns;
-    return txns.filter(
+    if (!q) return list;
+    return list.filter(
       (t) =>
-        t.hash.includes(q) ||
-        t.from.includes(q) ||
-        t.to.includes(q) ||
+        t.hash.toLowerCase().includes(q) ||
+        t.from.toLowerCase().includes(q) ||
+        t.to.toLowerCase().includes(q) ||
         String(t.block).includes(q),
     );
-  }, [txns, query]);
+  }, [txns, query, selectedBlock]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+
+  // Ensure current page is valid
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages, page]);
+
+  const paginatedTxns = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
 
   const flagged = txns.filter((t) => displayFor(t).level !== "safe").length;
 
@@ -73,16 +112,20 @@ function Monitor() {
   const status = live ? statusMeta[wsStatus] : { label: "Paused", dot: "text-muted-foreground" };
   const needsIngestHint = live && (wsStatus === "waiting" || wsStatus === "disconnected");
 
+  const toggleExpand = (hash: string) => {
+    setExpandedHash((prev) => (prev === hash ? null : hash));
+  };
+
   return (
     <ModuleShell>
       <PageHeader
         eyebrow="Live blockchain monitoring"
         title="The chain, as it happens."
-        description="Real transactions arrive from tools/live_ingest_etherscan.py, scored the moment they're ingested. Search by wallet, transaction hash or block height."
+        description="Real Ethereum transactions scored instantly by the 6-model ensemble. Expand any row to inspect deep forensic parameters or run SHAP explainability."
         aside={
           <button
             onClick={toggleLive}
-            className="inline-flex items-center gap-2 rounded-full glass-soft px-5 py-2.5 text-sm transition hover:bg-white/8"
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-[#111c38] px-5 py-2.5 text-sm font-medium text-foreground transition hover:border-primary"
           >
             <Radio className={`h-4 w-4 ${status.dot}`} />
             {status.label}
@@ -106,45 +149,15 @@ function Monitor() {
         </div>
       ) : null}
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          Scoring view
-        </span>
-        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="View risk by model">
-          <button
-            role="tab"
-            aria-selected={viewModel === "consensus"}
-            onClick={() => setViewModel("consensus")}
-            className={`rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-              viewModel === "consensus" ? "bg-white/14 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/6"
-            }`}
-          >
-            Consensus
-          </button>
-          {MODELS.map((m) => (
-            <button
-              key={m.id}
-              role="tab"
-              aria-selected={viewModel === m.id}
-              onClick={() => setViewModel(m.id)}
-              className={`rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-                viewModel === m.id ? "bg-white/14 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/6"
-              }`}
-            >
-              {m.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
+      {/* Top 4 Stat Tiles */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
           label="Latest block"
-          value={block ? block.toLocaleString() : "—"}
+          value={block ? `#${block.toLocaleString()}` : "—"}
           sub="~12s cadence"
           accent="cyan"
         />
-        <StatTile label="Txns in window" value={String(txns.length)} sub="rolling buffer" delay={0.05} />
+        <StatTile label="Txns in buffer" value={String(txns.length)} sub="rolling memory" delay={0.05} />
         <StatTile
           label="Flagged"
           value={String(flagged)}
@@ -161,145 +174,418 @@ function Monitor() {
         />
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <Panel delay={0.1} className="p-0">
-          <div className="flex items-center gap-3 border-b border-white/8 px-6 py-4">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search wallet, tx hash or block number…"
-              className="w-full bg-transparent font-mono text-xs outline-none placeholder:text-muted-foreground/70"
-            />
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              {filtered.length} results
-            </span>
+      {/* Latest Blocks Top Bar */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-3.5 sm:px-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mr-1">
+            <Blocks className="h-3.5 w-3.5 text-primary" />
+            <span>Latest Blocks:</span>
           </div>
-          <div className="max-h-[560px] overflow-y-auto">
-            {filtered.length === 0 ? (
-              <p className="px-6 py-16 text-center text-xs text-muted-foreground">
-                {live ? "Waiting for the first live transaction…" : "Feed paused. Press Streaming to resume."}
-              </p>
-            ) : (
-              <AnimatePresence initial={false}>
-                {filtered.map((t) => {
-                  const d = displayFor(t);
-                  return (
-                    <motion.button
-                      key={t.hash}
-                      layout
-                      initial={{ opacity: 0, x: -24, backgroundColor: "rgba(120,232,255,0.10)" }}
-                      animate={{ opacity: 1, x: 0, backgroundColor: "rgba(0,0,0,0)" }}
-                      exit={{ opacity: 0, x: 24 }}
-                      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                      onClick={() => setSelected(t)}
-                      className="flex w-full items-center gap-4 border-b border-white/5 px-6 py-3.5 text-left transition hover:bg-white/4"
-                    >
-                      <span className="w-32 shrink-0 font-mono text-[11px] text-foreground/90">
-                        {short(t.hash)}
-                      </span>
-                      <span className="hidden w-28 shrink-0 font-mono text-[11px] text-muted-foreground sm:block">
-                        {short(t.from, 4)}
-                      </span>
-                      <span className="hidden w-28 shrink-0 font-mono text-[11px] text-muted-foreground md:block">
-                        {short(t.to, 4)}
-                      </span>
-                      <span className="ml-auto shrink-0 font-mono text-xs tabular-nums">
-                        {t.value.toFixed(3)} Ξ
-                      </span>
-                      <span className="w-14 shrink-0 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
-                        {d.risk.toFixed(0)}
-                      </span>
-                      <RiskBadge level={d.level} label={d.level === "safe" ? "clear" : d.level} />
-                    </motion.button>
-                  );
-                })}
-              </AnimatePresence>
+          {recentBlocks.length === 0 ? (
+            <span className="font-mono text-xs text-muted-foreground">Waiting for blocks…</span>
+          ) : (
+            recentBlocks.map((b) => {
+              const count = txns.filter((t) => t.block === b).length;
+              const isSelected = selectedBlock === b;
+              return (
+                <button
+                  key={b}
+                  type="button"
+                  onClick={() => setSelectedBlock((prev) => (prev === b ? null : b))}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-lg border px-3 py-1 font-mono text-xs transition",
+                    isSelected
+                      ? "border-primary bg-primary/20 text-foreground"
+                      : "border-border bg-[#0e1832] text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                  )}
+                >
+                  <span className="font-semibold text-foreground">#{b.toLocaleString()}</span>
+                  <span className="text-[10px] text-muted-foreground">({count} tx)</span>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {selectedBlock !== null && (
+          <button
+            type="button"
+            onClick={() => setSelectedBlock(null)}
+            className="font-mono text-[11px] text-cyan hover:underline"
+          >
+            Clear Block Filter
+          </button>
+        )}
+      </div>
+
+      {/* Scoring Model Selector Pills */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="View risk by model">
+          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mr-1">
+            Scoring View:
+          </span>
+          <button
+            role="tab"
+            aria-selected={viewModel === "consensus"}
+            onClick={() => setViewModel("consensus")}
+            className={cn(
+              "rounded-lg border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition",
+              viewModel === "consensus"
+                ? "border-primary bg-primary/20 text-foreground font-semibold"
+                : "border-border bg-[#0e1832] text-muted-foreground hover:border-primary/50 hover:text-foreground",
             )}
+          >
+            Consensus
+          </button>
+          {MODELS.map((m) => (
+            <button
+              key={m.id}
+              role="tab"
+              aria-selected={viewModel === m.id}
+              onClick={() => setViewModel(m.id)}
+              className={cn(
+                "rounded-lg border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition",
+                viewModel === m.id
+                  ? "border-primary bg-primary/20 text-foreground font-semibold"
+                  : "border-border bg-[#0e1832] text-muted-foreground hover:border-primary/50 hover:text-foreground",
+              )}
+            >
+              {m.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Page size selector */}
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            Per Page:
+          </span>
+          <div className="flex gap-1">
+            {[10, 20, 50].map((sz) => (
+              <button
+                key={sz}
+                onClick={() => {
+                  setPageSize(sz);
+                  setPage(1);
+                }}
+                className={cn(
+                  "rounded-md border px-2.5 py-0.5 font-mono text-xs transition",
+                  pageSize === sz
+                    ? "border-primary bg-primary/20 text-foreground font-semibold"
+                    : "border-border bg-[#0e1832] text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                )}
+              >
+                {sz}
+              </button>
+            ))}
           </div>
-        </Panel>
-
-        <div className="space-y-4">
-          <Panel delay={0.16}>
-            <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <Blocks className="h-4 w-4 text-electric" /> Latest blocks
-            </h2>
-            {recentBlocks.length === 0 ? (
-              <p className="mt-4 text-xs text-muted-foreground">No blocks observed yet.</p>
-            ) : (
-              <ul className="mt-4 space-y-2">
-                {recentBlocks.map((b) => (
-                  <motion.li
-                    key={b}
-                    layout
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between rounded-lg border border-border bg-[#0e1832] px-4 py-3"
-                  >
-                    <div className="font-mono text-xs">#{b.toLocaleString()}</div>
-                    <span className="font-mono text-[11px] text-muted-foreground">
-                      {txns.filter((t) => t.block === b).length} txn scored
-                    </span>
-                  </motion.li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-
-          <Panel delay={0.22}>
-            <h2 className="text-sm font-semibold">Transaction detail</h2>
-            {selected ? (
-              <motion.div key={selected.hash} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-                {selected.featuresDefaulted ? (
-                  <div className="mt-4 flex items-center gap-2 rounded-lg border border-warn/40 bg-warn/10 px-3.5 py-1.5 text-[11px] text-warn">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                    Scored on gas/value features — no token data found for this wallet.
-                  </div>
-                ) : null}
-                <dl className="mt-4 space-y-3 text-xs">
-                  {[
-                    ["Hash", selected.hash],
-                    ["From", selected.from],
-                    ["To", selected.to],
-                    ["Value", `${selected.value} ETH`],
-                    ["Gas", `${selected.gas}`],
-                    ["Block", `#${selected.block}`],
-                    ["Risk score", `${displayFor(selected).risk} / 100`],
-                  ].map(([k, v]) => (
-                    <div key={k} className="flex gap-3">
-                      <dt className="w-20 shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                        {k}
-                      </dt>
-                      <dd className="break-all font-mono text-[11px]">{v}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <RiskBadge level={displayFor(selected).level} />
-                  <Link
-                    to="/detect"
-                    search={{
-                      from: selected.from,
-                      to: selected.to,
-                      value: String(selected.value),
-                      gas: String(selected.gas),
-                      hash: selected.hash,
-                      auto: "true",
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-[#0e1832] px-3.5 py-1.5 text-[11px] font-medium text-foreground transition hover:border-primary"
-                  >
-                    <SearchCode className="h-3.5 w-3.5" /> Investigate further
-                  </Link>
-                </div>
-              </motion.div>
-            ) : (
-              <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-                Select any transaction in the stream to inspect its full payload and AI risk score.
-              </p>
-            )}
-          </Panel>
         </div>
       </div>
+
+      {/* Full-Width Live Transactions Table */}
+      <Panel delay={0.1} className="mt-4 p-0 overflow-hidden">
+        {/* Table Search Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-[#0e1832] px-6 py-3.5">
+          <div className="flex flex-1 items-center gap-3 min-w-[240px]">
+            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+            <input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search wallet address, tx hash, or block height…"
+              className="w-full bg-transparent font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/60"
+            />
+          </div>
+          <span className="font-mono text-[11px] text-muted-foreground shrink-0">
+            {filtered.length} total transactions
+          </span>
+        </div>
+
+        {/* Table Column Headers */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-border bg-[#0e1832]/60 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                <th className="px-5 py-3 font-semibold">Txn Hash</th>
+                <th className="px-4 py-3 font-semibold">Block</th>
+                <th className="px-4 py-3 font-semibold">From (Sender)</th>
+                <th className="px-4 py-3 font-semibold">To (Contract / Recipient)</th>
+                <th className="px-4 py-3 font-semibold text-right">Value (ETH)</th>
+                <th className="px-4 py-3 font-semibold text-right">Gas</th>
+                <th className="px-4 py-3 font-semibold text-right">Risk Score</th>
+                <th className="px-4 py-3 font-semibold text-center">Verdict</th>
+                <th className="px-4 py-3 font-semibold text-center w-16">Details</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border text-xs">
+              {paginatedTxns.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-16 text-center text-xs text-muted-foreground">
+                    {live
+                      ? "Waiting for the first live transaction to be ingested…"
+                      : "Feed paused. Click 'Live' to resume streaming."}
+                  </td>
+                </tr>
+              ) : (
+                paginatedTxns.map((t) => {
+                  const d = displayFor(t);
+                  const isExpanded = expandedHash === t.hash;
+
+                  return (
+                    <Fragment key={t.hash}>
+                      <tr
+                        onClick={() => toggleExpand(t.hash)}
+                        className={cn(
+                          "cursor-pointer transition hover:bg-[#152446]/60",
+                          isExpanded ? "bg-[#152446]/80" : "",
+                        )}
+                      >
+                        {/* Hash */}
+                        <td className="px-5 py-3.5 font-mono text-xs text-cyan font-medium">
+                          {short(t.hash, 8)}
+                        </td>
+
+                        {/* Block */}
+                        <td className="px-4 py-3.5 font-mono text-xs text-foreground/80">
+                          #{t.block.toLocaleString()}
+                        </td>
+
+                        {/* From */}
+                        <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
+                          {short(t.from, 6)}
+                        </td>
+
+                        {/* To */}
+                        <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
+                          {short(t.to, 6)}
+                        </td>
+
+                        {/* Value */}
+                        <td className="px-4 py-3.5 text-right font-mono text-xs tabular-nums text-foreground">
+                          {t.value.toFixed(4)} Ξ
+                        </td>
+
+                        {/* Gas */}
+                        <td className="px-4 py-3.5 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                          {t.gas.toLocaleString()}
+                        </td>
+
+                        {/* Risk Score */}
+                        <td className="px-4 py-3.5 text-right font-mono text-xs font-semibold tabular-nums text-foreground">
+                          {d.risk.toFixed(1)}
+                        </td>
+
+                        {/* Verdict Badge */}
+                        <td className="px-4 py-3.5 text-center">
+                          <RiskBadge level={d.level} label={d.level === "safe" ? "Clear" : d.level} />
+                        </td>
+
+                        {/* Expand Action Arrow */}
+                        <td className="px-4 py-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(t.hash);
+                            }}
+                            className="p-1 text-muted-foreground transition hover:text-foreground"
+                            aria-label={isExpanded ? "Collapse transaction details" : "Expand transaction details"}
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4 text-cyan" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </button>
+                        </td>
+                      </tr>
+
+                      {/* Expandable Forensic Dropdown Drawer */}
+                      {isExpanded && (
+                        <tr className="bg-[#0e1832] border-b border-border">
+                          <td colSpan={9} className="p-5">
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="space-y-4"
+                            >
+                              {t.featuresDefaulted && (
+                                <div className="flex items-center gap-2 rounded-lg border border-warn/40 bg-warn/10 px-3.5 py-2 text-xs text-warn">
+                                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                                  <span>Scored on gas/value features — sender wallet has no prior ERC-20 token history on Etherscan.</span>
+                                </div>
+                              )}
+
+                              {/* Forensic Grid */}
+                              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                <div className="rounded-lg border border-border bg-card p-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+                                      Full Txn Hash
+                                    </span>
+                                    <button
+                                      onClick={() => copyToClipboard(t.hash, "Transaction Hash")}
+                                      className="text-muted-foreground hover:text-cyan transition"
+                                      title="Copy Hash"
+                                    >
+                                      <Copy className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                  <div className="mt-1 font-mono text-xs text-foreground break-all">
+                                    {t.hash}
+                                  </div>
+                                </div>
+
+                                <div className="rounded-lg border border-border bg-card p-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+                                      From Address (Sender)
+                                    </span>
+                                    <button
+                                      onClick={() => copyToClipboard(t.from, "From Address")}
+                                      className="text-muted-foreground hover:text-cyan transition"
+                                      title="Copy From Address"
+                                    >
+                                      <Copy className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                  <div className="mt-1 font-mono text-xs text-foreground break-all">
+                                    {t.from}
+                                  </div>
+                                </div>
+
+                                <div className="rounded-lg border border-border bg-card p-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+                                      To Address (Contract)
+                                    </span>
+                                    <button
+                                      onClick={() => copyToClipboard(t.to, "To Address")}
+                                      className="text-muted-foreground hover:text-cyan transition"
+                                      title="Copy To Address"
+                                    >
+                                      <Copy className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                  <div className="mt-1 font-mono text-xs text-foreground break-all">
+                                    {t.to}
+                                  </div>
+                                </div>
+
+                                <div className="rounded-lg border border-border bg-card p-3">
+                                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+                                    Value & Gas Metrics
+                                  </span>
+                                  <div className="mt-1 flex items-baseline justify-between">
+                                    <span className="font-mono text-sm font-semibold text-foreground">
+                                      {t.value} ETH
+                                    </span>
+                                    <span className="font-mono text-xs text-muted-foreground">
+                                      {t.gas.toLocaleString()} gas
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Footer with Deep Investigation Link */}
+                              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                                <div className="flex items-center gap-3">
+                                  <RiskBadge level={d.level} label={`${d.risk.toFixed(1)} / 100 Risk Score`} />
+                                  <span className="font-mono text-xs text-muted-foreground">
+                                    Observed in Block #{t.block.toLocaleString()}
+                                  </span>
+                                </div>
+
+                                <Link
+                                  to="/detect"
+                                  search={{
+                                    from: t.from,
+                                    to: t.to,
+                                    value: String(t.value),
+                                    gas: String(t.gas),
+                                    hash: t.hash,
+                                    auto: "true",
+                                  }}
+                                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-mono text-xs font-medium text-primary-foreground transition hover:bg-primary/90 shadow-sm"
+                                >
+                                  <SearchCode className="h-4 w-4" />
+                                  Investigate Further (SHAP Explainability Waterfall) →
+                                </Link>
+                              </div>
+                            </motion.div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Table Pagination Footer */}
+        {filtered.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-[#0e1832] px-6 py-3.5">
+            <div className="font-mono text-xs text-muted-foreground">
+              Showing <span className="font-semibold text-foreground">{(page - 1) * pageSize + 1}</span>–
+              <span className="font-semibold text-foreground">
+                {Math.min(page * pageSize, filtered.length)}
+              </span> of <span className="font-semibold text-foreground">{filtered.length}</span> transactions
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 font-mono text-xs text-foreground transition hover:border-primary disabled:opacity-40"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" /> Prev
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, idx) => idx + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                  .map((p, idx, arr) => {
+                    const prevP = arr[idx - 1];
+                    const hasGap = prevP && p - prevP > 1;
+
+                    return (
+                      <div key={p} className="flex items-center">
+                        {hasGap && <span className="px-1 text-muted-foreground">…</span>}
+                        <button
+                          type="button"
+                          onClick={() => setPage(p)}
+                          className={cn(
+                            "h-7 w-7 rounded-md border font-mono text-xs transition",
+                            page === p
+                              ? "border-primary bg-primary text-primary-foreground font-semibold"
+                              : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                          )}
+                        >
+                          {p}
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 font-mono text-xs text-foreground transition hover:border-primary disabled:opacity-40"
+              >
+                Next <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+      </Panel>
     </ModuleShell>
   );
 }
