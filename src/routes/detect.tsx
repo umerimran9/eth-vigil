@@ -447,24 +447,24 @@ function Detect() {
         {/* Left: Input Panel */}
         <Panel className="relative flex h-full flex-col justify-between p-6 sm:p-7">
           <div>
-            <div className="flex items-center justify-between border-b border-white/6 pb-4">
+            <div className="flex items-center justify-between border-b border-border pb-3.5">
               <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
                 <Sliders className="h-3.5 w-3.5 text-cyan" />
                 Transaction Parameters
               </span>
-              <span className="rounded-full bg-cyan/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-cyan">
+              <span className="rounded bg-cyan/15 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-cyan font-medium">
                 Live Token Enrichment
               </span>
             </div>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid gap-3.5 sm:grid-cols-2">
               <div>
                 <label className="text-[11px] font-medium text-muted-foreground">From Address (Sender)</label>
                 <input
                   value={fromAddr}
                   onChange={(e) => setFromAddr(e.target.value)}
                   placeholder="0x…"
-                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/50 focus:bg-white/6"
+                  className="mt-1.5 w-full rounded-lg border border-border bg-[#0e1832] px-3 py-2 font-mono text-xs text-foreground outline-none transition focus:border-primary"
                 />
               </div>
               <div>
@@ -473,7 +473,7 @@ function Detect() {
                   value={toAddr}
                   onChange={(e) => setToAddr(e.target.value)}
                   placeholder="0x…"
-                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/50 focus:bg-white/6"
+                  className="mt-1.5 w-full rounded-lg border border-border bg-[#0e1832] px-3 py-2 font-mono text-xs text-foreground outline-none transition focus:border-primary"
                 />
               </div>
               <div>
@@ -482,7 +482,7 @@ function Detect() {
                   value={valueEth}
                   onChange={(e) => setValueEth(e.target.value)}
                   placeholder="1.45"
-                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/50 focus:bg-white/6"
+                  className="mt-1.5 w-full rounded-lg border border-border bg-[#0e1832] px-3 py-2 font-mono text-xs text-foreground outline-none transition focus:border-primary"
                 />
               </div>
               <div>
@@ -491,13 +491,13 @@ function Detect() {
                   value={gasUsed}
                   onChange={(e) => setGasUsed(e.target.value)}
                   placeholder="21000"
-                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 font-mono text-xs outline-none transition focus:border-cyan/50 focus:bg-white/6"
+                  className="mt-1.5 w-full rounded-lg border border-border bg-[#0e1832] px-3 py-2 font-mono text-xs text-foreground outline-none transition focus:border-primary"
                 />
               </div>
             </div>
 
             {/* Target Model Selector */}
-            <div className="mt-5">
+            <div className="mt-4">
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
                   <Cpu className="h-3.5 w-3.5 text-cyan" />
@@ -510,7 +510,7 @@ function Detect() {
                 </span>
               </div>
 
-              <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
+              <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -518,16 +518,16 @@ function Detect() {
                     setViewModel("consensus");
                   }}
                   className={cn(
-                    "relative flex flex-col items-start rounded-xl p-2.5 text-left transition border",
+                    "relative flex flex-col items-start rounded-lg p-2.5 text-left transition border",
                     selectedModel === "consensus"
-                      ? "border-cyan/50 bg-cyan/12 text-foreground shadow-[0_0_14px_rgba(6,182,212,0.18)]"
-                      : "border-white/5 bg-white/3 text-muted-foreground hover:border-white/15 hover:bg-white/6 hover:text-foreground",
+                      ? "border-primary bg-primary/20 text-foreground"
+                      : "border-border bg-[#0e1832] text-muted-foreground hover:border-primary/50 hover:text-foreground",
                   )}
                 >
                   <div className="flex w-full items-center justify-between">
                     <span className="text-xs font-semibold text-foreground">Consensus</span>
                     {selectedModel === "consensus" && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse shrink-0" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-cyan shrink-0" />
                     )}
                   </div>
                   <span className="mt-0.5 text-[10px] text-muted-foreground leading-tight">
@@ -544,10 +544,10 @@ function Detect() {
                       setViewModel(m.id);
                     }}
                     className={cn(
-                      "relative flex flex-col items-start rounded-xl p-2.5 text-left transition border",
+                      "relative flex flex-col items-start rounded-lg p-2.5 text-left transition border",
                       selectedModel === m.id
-                        ? "border-cyan/50 bg-cyan/12 text-foreground shadow-[0_0_14px_rgba(6,182,212,0.18)]"
-                        : "border-white/5 bg-white/3 text-muted-foreground hover:border-white/15 hover:bg-white/6 hover:text-foreground",
+                        ? "border-primary bg-primary/20 text-foreground"
+                        : "border-border bg-[#0e1832] text-muted-foreground hover:border-primary/50 hover:text-foreground",
                     )}
                   >
                     <div className="flex w-full items-center justify-between">
@@ -555,7 +555,7 @@ function Detect() {
                         {m.name}
                       </span>
                       {selectedModel === m.id && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse shrink-0" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-cyan shrink-0" />
                       )}
                     </div>
                     <span className="mt-0.5 text-[10px] text-muted-foreground leading-tight truncate w-full">
@@ -568,11 +568,11 @@ function Detect() {
           </div>
 
           <div>
-            <div className="mt-6 flex gap-2.5">
+            <div className="mt-5 flex gap-2.5">
               <button
                 onClick={() => run()}
                 disabled={busy}
-                className="grad-fill sheen inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-medium transition disabled:opacity-50"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
               >
                 <Sparkles className="h-4 w-4" />
                 {busy ? "Analysing Transaction…" : "Run detection"}
@@ -581,7 +581,7 @@ function Detect() {
                 onClick={() => applyPreset(PRESETS[0])}
                 disabled={busy}
                 title="Reset to sample transaction"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl glass-soft px-5 py-3.5 text-sm font-medium transition hover:bg-white/8 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-[#0e1832] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-card-hover disabled:opacity-50"
               >
                 <RefreshCw className="h-4 w-4" /> Reset
               </button>
@@ -841,7 +841,7 @@ function VerdictHero({
         </div>
 
         {/* 3-Column Key Metrics */}
-        <div className="mt-5 grid grid-cols-3 gap-3 rounded-2xl border border-white/6 bg-white/2 p-3.5 sm:gap-4 sm:p-4">
+        <div className="mt-5 grid grid-cols-3 gap-3 rounded-lg border border-border bg-[#0e1832] p-3.5 sm:gap-4 sm:p-4">
           <div>
             <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
               Fraud Score
@@ -872,7 +872,7 @@ function VerdictHero({
       </div>
 
       {/* Embedded Action Protocol Tag */}
-      <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/4 p-3.5">
+      <div className="mt-5 flex items-center justify-between gap-3 rounded-lg border border-border bg-[#0e1832] p-3.5">
         <div className="flex items-center gap-2.5">
           {level === "high" ? (
             <ShieldAlert className="h-4 w-4 text-risk shrink-0" />
@@ -966,10 +966,10 @@ function ModelConsensusPanel({ result, viewModel }: { result: Result; viewModel:
                   }}
                 >
                   <div
-                    className="rounded-2xl glass-soft px-3 py-2.5 transition"
+                    className="rounded-lg border border-border bg-[#0e1832] px-3 py-2 transition"
                     style={{
                       boxShadow: selected
-                        ? `0 0 0 2px var(--cyan-accent), 0 0 22px -4px var(--cyan-accent)`
+                        ? `0 0 0 2px var(--cyan-accent)`
                         : `0 0 0 1px ${fraud ? "var(--risk)" : "var(--safe)"}`,
                     }}
                   >
@@ -984,9 +984,9 @@ function ModelConsensusPanel({ result, viewModel }: { result: Result; viewModel:
               );
             })}
 
-            <div className="relative z-10 grid h-28 w-28 place-items-center rounded-full glass-panel text-center shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+            <div className="relative z-10 grid h-24 w-24 place-items-center rounded-full border border-border bg-[#0e1832] text-center shadow-md">
               <Network className="mx-auto h-4 w-4 text-cyan" strokeWidth={1.6} />
-              <div className="mt-1 font-display text-xl font-semibold tabular-nums">
+              <div className="mt-1 font-display text-lg font-semibold tabular-nums">
                 {(result.confidence * 100).toFixed(0)}%
               </div>
               <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -1012,7 +1012,7 @@ function FeatureAttributionPanel({
   return (
     <Panel delay={0.16} className="flex h-full flex-col justify-between p-6 sm:p-7">
       <div>
-        <div className="flex items-center justify-between border-b border-white/6 pb-4">
+        <div className="flex items-center justify-between border-b border-border pb-3.5">
           <div>
             <h2 className="text-sm font-semibold">
               {real ? "SHAP Explainability Waterfall" : "Feature Attribution Waterfall"}
@@ -1021,19 +1021,19 @@ function FeatureAttributionPanel({
               {real ? `Exact Shapley attributions across ${models.length} models` : "Heuristic importance weights"}
             </p>
           </div>
-          <span className="rounded-full bg-cyan/10 px-2.5 py-0.5 font-mono text-[10px] font-medium text-cyan">
+          <span className="rounded bg-cyan/15 px-2 py-0.5 font-mono text-[10px] font-medium text-cyan">
             {real ? "Exact Shapley" : "Heuristic"}
           </span>
         </div>
 
         {shap.length > 0 ? (
-          <ul className="mt-4 space-y-3.5">
+          <ul className="mt-4 space-y-3">
             {shap.map((f) => {
               const meta = formatFeatureName(f.feature);
               const isPositive = f.shap_value > 0;
 
               return (
-                <li key={f.feature} className="rounded-xl border border-white/4 bg-white/2 p-3 transition hover:bg-white/4">
+                <li key={f.feature} className="rounded-lg border border-border bg-[#0e1832] p-3 transition hover:border-primary/50">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="text-xs font-medium text-foreground">{meta.title}</div>
@@ -1095,7 +1095,7 @@ function TransactionEvidencePanel({ tx }: { tx: TransactionMeta | null }) {
 
   return (
     <Panel delay={0.22} className="p-6 sm:p-7">
-      <div className="flex items-center justify-between border-b border-white/6 pb-4">
+      <div className="flex items-center justify-between border-b border-border pb-3.5">
         <div>
           <h2 className="text-sm font-semibold">Transaction Forensic Evidence</h2>
           <p className="mt-0.5 text-[11px] text-muted-foreground">Immutable on-chain parameters evaluated</p>
@@ -1103,9 +1103,9 @@ function TransactionEvidencePanel({ tx }: { tx: TransactionMeta | null }) {
         <span className="font-mono text-[10px] text-muted-foreground">Audit Record</span>
       </div>
 
-      <dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="mt-4 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         {fields.map(([label, value, copyValue]) => (
-          <div key={label} className="rounded-2xl border border-white/6 bg-white/2 p-3.5">
+          <div key={label} className="rounded-lg border border-border bg-[#0e1832] p-3">
             <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
               {label}
             </dt>
@@ -1133,23 +1133,23 @@ function RecommendationPanel({ result }: { result: Result }) {
   const level = levelFromVerdict(result.verdict, result.risk);
   return (
     <Panel delay={0.28} className="p-6 sm:p-7">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/6 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3.5">
         <div>
           <h2 className="text-sm font-semibold">SOC Incident Guidance & Security Protocol</h2>
           <p className="mt-0.5 text-[11px] text-muted-foreground">Automated threat response playbook actions</p>
         </div>
         <div className="flex items-center gap-2">
           <RiskBadge level={level} />
-          <span className="rounded-full glass-soft px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em]">
+          <span className="rounded-lg border border-border bg-[#0e1832] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em]">
             {actionLabel(result.action)}
           </span>
         </div>
       </div>
 
-      <div className="mt-5 space-y-3 text-sm leading-relaxed text-muted-foreground">
+      <div className="mt-4 space-y-2.5 text-sm leading-relaxed text-muted-foreground">
         {result.recommendations.length > 0 ? (
           result.recommendations.map((rec, i) => (
-            <div key={i} className="flex items-start gap-3.5 rounded-2xl border border-white/4 bg-white/2 p-4">
+            <div key={i} className="flex items-start gap-3 rounded-lg border border-border bg-[#0e1832] p-3.5">
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan/15 text-xs font-semibold text-cyan">
                 {i + 1}
               </span>

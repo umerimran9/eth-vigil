@@ -1,10 +1,9 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Aurora mesh + drifting blockchain particle field.
- * Canvas draws nodes and links; CSS layers supply aurora depth.
+ * Clean ambient canvas matching Etherscan's solid dark navy aesthetic.
  */
-export function AuroraField({ density = 46, showGrid = true }: { density?: number; showGrid?: boolean }) {
+export function AuroraField({ density = 28, showGrid = false }: { density?: number; showGrid?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -22,10 +21,10 @@ export function AuroraField({ density = 46, showGrid = true }: { density?: numbe
     const nodes = Array.from({ length: density }, () => ({
       x: Math.random(),
       y: Math.random(),
-      vx: (Math.random() - 0.5) * 0.00035,
-      vy: (Math.random() - 0.5) * 0.00035,
-      r: Math.random() * 1.6 + 0.6,
-      hot: Math.random() < 0.12,
+      vx: (Math.random() - 0.5) * 0.00025,
+      vy: (Math.random() - 0.5) * 0.00025,
+      r: Math.random() * 1.2 + 0.4,
+      hot: Math.random() < 0.08,
     }));
 
     const resize = () => {
@@ -61,10 +60,10 @@ export function AuroraField({ density = 46, showGrid = true }: { density?: numbe
           const bx = b.x * w;
           const by = b.y * h;
           const d = Math.hypot(ax - bx, ay - by);
-          if (d < 168) {
-            const alpha = (1 - d / 168) * 0.28;
+          if (d < 140) {
+            const alpha = (1 - d / 140) * 0.15;
             ctx.strokeStyle = `rgba(56,189,248,${alpha})`;
-            ctx.lineWidth = 0.6;
+            ctx.lineWidth = 0.5;
             ctx.beginPath();
             ctx.moveTo(ax, ay);
             ctx.lineTo(bx, by);
@@ -73,22 +72,13 @@ export function AuroraField({ density = 46, showGrid = true }: { density?: numbe
         }
 
         const pd = Math.hypot(ax - pointer.x, ay - pointer.y);
-        const boost = pd < 190 ? 1 - pd / 190 : 0;
+        const boost = pd < 160 ? 1 - pd / 160 : 0;
         ctx.beginPath();
-        ctx.arc(ax, ay, a.r + boost * 2.4, 0, Math.PI * 2);
+        ctx.arc(ax, ay, a.r + boost * 1.5, 0, Math.PI * 2);
         ctx.fillStyle = a.hot
-          ? `rgba(0,192,135,${0.6 + boost * 0.4})`
-          : `rgba(56,189,248,${0.35 + boost * 0.5})`;
+          ? `rgba(0,192,135,${0.5 + boost * 0.3})`
+          : `rgba(56,189,248,${0.25 + boost * 0.35})`;
         ctx.fill();
-
-        if (boost > 0.02) {
-          ctx.strokeStyle = `rgba(7,132,195,${boost * 0.4})`;
-          ctx.lineWidth = 0.7;
-          ctx.beginPath();
-          ctx.moveTo(ax, ay);
-          ctx.lineTo(pointer.x, pointer.y);
-          ctx.stroke();
-        }
       }
       raf = requestAnimationFrame(draw);
     };
@@ -105,17 +95,8 @@ export function AuroraField({ density = 46, showGrid = true }: { density?: numbe
   }, [density]);
 
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-90"
-        style={{ background: "var(--gradient-aurora)" }}
-      />
-      <div className="absolute -top-1/3 left-1/2 h-[80vh] w-[80vw] -translate-x-1/2 rounded-full opacity-25 blur-3xl animate-float-slow"
-        style={{ background: "var(--gradient-core)" }}
-      />
-      {showGrid ? <div className="absolute inset-0 grid-noise opacity-60" /> : null}
-      <canvas ref={ref} className="absolute inset-0 h-full w-full" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background" />
+    <div className="pointer-events-none fixed inset-0 -z-10 bg-[#081028]">
+      <canvas ref={ref} className="absolute inset-0 h-full w-full opacity-60" />
     </div>
   );
 }

@@ -99,7 +99,7 @@ function Settings() {
               return (
                 <div
                   key={m.id}
-                  className="flex items-center justify-between gap-3 rounded-2xl glass-soft px-4 py-3.5"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-[#0e1832] px-4 py-3"
                 >
                   <div>
                     <div className="text-xs font-medium">{m.name}</div>

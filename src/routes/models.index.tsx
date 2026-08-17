@@ -45,7 +45,7 @@ function Models() {
             <Link
               to="/models/$modelId"
               params={{ modelId: m.id }}
-              className="group relative block h-full overflow-hidden rounded-3xl glass-panel p-7"
+              className="group relative block h-full overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition hover:border-primary"
             >
               <div className="flex items-start justify-between">
                 <div>

@@ -113,7 +113,7 @@ function Batch() {
       <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
         <div className="space-y-4">
           <Panel>
-            <label className="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-white/14 bg-white/2 px-6 py-14 text-center transition hover:border-cyan/40 hover:bg-white/4">
+            <label className="group flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-[#0e1832] px-6 py-12 text-center transition hover:border-primary">
               <UploadCloud className="h-7 w-7 text-cyan transition group-hover:-translate-y-1" strokeWidth={1.5} />
               <span className="mt-4 text-sm font-medium">Drop your CSV here</span>
               <span className="mt-1 text-xs text-muted-foreground">
@@ -131,7 +131,7 @@ function Batch() {
               />
             </label>
             {file ? (
-              <div className="mt-4 flex items-center gap-2 rounded-xl glass-soft px-4 py-3 text-xs">
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-[#0e1832] px-4 py-3 text-xs">
                 <FileSpreadsheet className="h-4 w-4 text-safe" />
                 <span className="font-mono">{file}</span>
               </div>
@@ -155,10 +155,10 @@ function Batch() {
                       onClick={() => setBatchModel(id)}
                       aria-pressed={on}
                       className={cn(
-                        "rounded-full px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em]",
+                        "rounded-lg border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em]",
                         on
-                          ? "bg-white/14 text-foreground"
-                          : "text-muted-foreground hover:bg-white/6 hover:text-foreground",
+                          ? "border-primary bg-primary/20 text-foreground"
+                          : "border-border bg-[#0e1832] text-muted-foreground hover:border-primary/50 hover:text-foreground",
                       )}
                     >
                       {label}
@@ -172,7 +172,7 @@ function Batch() {
               <button
                 onClick={start}
                 disabled={running || !fileObject}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-foreground px-6 py-3.5 text-sm font-medium text-background transition hover:scale-[1.01] disabled:opacity-50"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
               >
                 <Play className="h-4 w-4" /> {running ? `Scoring ${progress}%` : "Run batch analysis"}
               </button>
@@ -180,7 +180,7 @@ function Batch() {
                 onClick={loadDemo}
                 disabled={running}
                 title="Load a real 3,000-row held-out sample (8.6% fraud rate)"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl glass-soft px-5 py-3.5 text-sm font-medium transition hover:bg-white/8 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-[#0e1832] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-card-hover disabled:opacity-50"
               >
                 <Sparkles className="h-4 w-4" /> Load demo CSV
               </button>

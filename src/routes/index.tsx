@@ -114,7 +114,7 @@ function Landing() {
             </Link>
             <Link
               to="/monitor"
-              className="inline-flex items-center gap-2 rounded-full glass-soft px-6 py-3 text-sm font-medium transition hover:scale-[1.03] hover:bg-white/8"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-[#111c38] px-6 py-3 text-sm font-medium text-foreground transition hover:border-primary"
             >
               Watch the live feed
             </Link>
@@ -148,16 +148,16 @@ function Landing() {
           {CAPABILITIES.map((c, i) => (
             <motion.article
               key={c.title}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
-              transition={{ delay: i * 0.12, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{ y: -6 }}
-              className="rounded-3xl glass-panel p-7"
+              transition={{ delay: i * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -3 }}
+              className="rounded-xl border border-border bg-card p-6 shadow-sm"
             >
               <c.icon className="h-5 w-5 text-cyan" strokeWidth={1.6} />
-              <h2 className="mt-6 text-lg font-semibold">{c.title}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{c.body}</p>
+              <h2 className="mt-5 text-lg font-semibold">{c.title}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.body}</p>
             </motion.article>
           ))}
         </div>
@@ -183,7 +183,7 @@ function Landing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ delay: i * 0.06 }}
-              className="rounded-2xl glass-soft p-5"
+              className="rounded-lg border border-border bg-[#0e1832] p-5"
             >
               <span className="font-mono text-[11px] text-cyan/80">{s.step}</span>
               <div className="mt-2 text-sm font-medium">{s.label}</div>

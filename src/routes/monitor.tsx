@@ -91,7 +91,7 @@ function Monitor() {
       />
 
       {needsIngestHint ? (
-        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-warn/30 bg-warn/8 px-5 py-4 text-xs text-warn">
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-warn/40 bg-warn/10 px-5 py-4 text-xs text-warn">
           <Terminal className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             <p className="font-medium">
@@ -232,9 +232,9 @@ function Monitor() {
                   <motion.li
                     key={b}
                     layout
-                    initial={{ opacity: 0, y: -10 }}
+                    initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between rounded-2xl border border-white/6 bg-white/3 px-4 py-3"
+                    className="flex items-center justify-between rounded-lg border border-border bg-[#0e1832] px-4 py-3"
                   >
                     <div className="font-mono text-xs">#{b.toLocaleString()}</div>
                     <span className="font-mono text-[11px] text-muted-foreground">
@@ -249,9 +249,9 @@ function Monitor() {
           <Panel delay={0.22}>
             <h2 className="text-sm font-semibold">Transaction detail</h2>
             {selected ? (
-              <motion.div key={selected.hash} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key={selected.hash} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
                 {selected.featuresDefaulted ? (
-                  <div className="mt-4 flex items-center gap-2 rounded-full border border-warn/35 bg-warn/12 px-3.5 py-1.5 text-[11px] text-warn">
+                  <div className="mt-4 flex items-center gap-2 rounded-lg border border-warn/40 bg-warn/10 px-3.5 py-1.5 text-[11px] text-warn">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                     Scored on gas/value features — no token data found for this wallet.
                   </div>
@@ -286,7 +286,7 @@ function Monitor() {
                       hash: selected.hash,
                       auto: "true",
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-full glass-soft px-3.5 py-1.5 text-[11px] font-medium transition hover:bg-white/10"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-[#0e1832] px-3.5 py-1.5 text-[11px] font-medium text-foreground transition hover:border-primary"
                   >
                     <SearchCode className="h-3.5 w-3.5" /> Investigate further
                   </Link>
