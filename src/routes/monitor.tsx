@@ -17,9 +17,11 @@ import {
   ShieldAlert,
   ShieldCheck,
   Zap,
+  Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModuleShell, PageHeader, Panel, RiskBadge, StatTile, short } from "@/components/ui-kit";
+import { ForensicPdfModal, type ForensicReportData } from "@/components/forensic-pdf-modal";
 import { actionLabel, levelFromVerdict, MODELS, type RiskLevel, type Txn } from "@/lib/platform-data";
 import { useLiveStreamStore, type LiveTxn, type WsStatus } from "@/lib/stream-store";
 import { cn } from "@/lib/utils";
@@ -61,6 +63,7 @@ function Monitor() {
   // Pagination state
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [pdfModalData, setPdfModalData] = useState<ForensicReportData | null>(null);
 
   // Re-derives risk/level for the selected view
   const displayFor = (t: LiveTxn): { risk: number; level: RiskLevel } => {
@@ -499,21 +502,45 @@ function Monitor() {
                                   </span>
                                 </div>
 
-                                <Link
-                                  to="/detect"
-                                  search={{
-                                    from: t.from,
-                                    to: t.to,
-                                    value: String(t.value),
-                                    gas: String(t.gas),
-                                    hash: t.hash,
-                                    auto: "true",
-                                  }}
-                                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-mono text-xs font-medium text-primary-foreground transition hover:bg-primary/90 shadow-sm"
-                                >
-                                  <SearchCode className="h-4 w-4" />
-                                  Investigate Further (SHAP Explainability Waterfall) →
-                                </Link>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPdfModalData({
+                                        hash: t.hash,
+                                        from: t.from,
+                                        to: t.to,
+                                        value: t.value,
+                                        gas: t.gas,
+                                        block: t.block,
+                                        risk: d.risk,
+                                        level: d.level,
+                                        featuresDefaulted: t.featuresDefaulted,
+                                        modelScores: t.modelScores,
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-[#111c38] px-3.5 py-2 font-mono text-xs text-foreground transition hover:border-primary"
+                                  >
+                                    <Printer className="h-3.5 w-3.5 text-cyan" />
+                                    Download Forensic PDF
+                                  </button>
+
+                                  <Link
+                                    to="/detect"
+                                    search={{
+                                      from: t.from,
+                                      to: t.to,
+                                      value: String(t.value),
+                                      gas: String(t.gas),
+                                      hash: t.hash,
+                                      auto: "true",
+                                    }}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-mono text-xs font-medium text-primary-foreground transition hover:bg-primary/90 shadow-sm"
+                                  >
+                                    <SearchCode className="h-4 w-4" />
+                                    Investigate Further (SHAP Explainability Waterfall) →
+                                  </Link>
+                                </div>
                               </div>
                             </motion.div>
                           </td>
@@ -586,6 +613,9 @@ function Monitor() {
           </div>
         )}
       </Panel>
+
+      {/* Printable Forensic PDF Modal */}
+      <ForensicPdfModal data={pdfModalData} onClose={() => setPdfModalData(null)} />
     </ModuleShell>
   );
 }

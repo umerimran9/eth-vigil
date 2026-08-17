@@ -235,3 +235,38 @@
 @utility sheen {
   position: relative;
 }
+
+/* High-Resolution Vector Print-to-PDF Styles */
+@media print {
+  body {
+    background-color: #081028 !important;
+    color: #f8fafc !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  nav,
+  footer,
+  .no-print,
+  button:not(.print-keep),
+  [role="navigation"] {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure cards and charts print with solid backgrounds and clean borders */
+  .bg-card,
+  [data-slot="card"],
+  panel {
+    background-color: #111c38 !important;
+    border-color: #1e3258 !important;
+  }
+}

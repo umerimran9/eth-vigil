@@ -282,15 +282,22 @@ export const actionLabel = (action: string | undefined): string => {
 export const verdictLabel = (verdict: string | undefined): string => {
   switch (verdict) {
     case "HIGH_RISK_FRAUD":
-      return "High risk fraud";
-    case "SUSPICIOUS_ACTIVITY":
-      return "Suspicious activity";
-    case "LEGITIMATE":
-      return "Legitimate";
     case "FRAUD":
-      return "Fraud";
+    case "High risk fraud":
+    case "High risk":
+    case "High Risk":
+      return "High Risk";
+    case "SUSPICIOUS_ACTIVITY":
+    case "Suspicious activity":
+    case "Elevated":
+    case "Medium":
+      return "Medium";
+    case "LEGITIMATE":
+    case "Legitimate":
+    case "Clear":
+      return "Clear";
     default:
-      return verdict ?? "Unknown";
+      return verdict ?? "Clear";
   }
 };
 

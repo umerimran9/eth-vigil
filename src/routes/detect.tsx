@@ -23,9 +23,11 @@ import {
   Sparkles,
   Wallet,
   Zap,
+  Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Meter, ModuleShell, PageHeader, Panel, RiskBadge, short, StatTile } from "@/components/ui-kit";
+import { ForensicPdfModal, type ForensicReportData } from "@/components/forensic-pdf-modal";
 import { actionLabel, levelFromVerdict, MODELS, verdictLabel } from "@/lib/platform-data";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -258,6 +260,7 @@ function Detect() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [viewModel, setViewModel] = useState<string>("consensus");
   const [scoredBy, setScoredBy] = useState<string>("consensus");
+  const [pdfModalData, setPdfModalData] = useState<ForensicReportData | null>(null);
 
   const buildPayload = (o?: Partial<{ fromAddr: string; toAddr: string; valueEth: string; gasUsed: string; hash: string }>) => {
     const v = o?.valueEth ?? valueEth;
@@ -626,7 +629,26 @@ function Detect() {
                   Scored on gas/value features — token data defaulted safely.
                 </div>
               ) : null}
-              <VerdictHero result={result} viewModel={viewModel} onSelectModel={selectModel} />
+              <VerdictHero
+                result={result}
+                viewModel={viewModel}
+                onSelectModel={selectModel}
+                onExportPdf={() =>
+                  setPdfModalData({
+                    hash: result.transaction?.hash || hash || "0x" + "0".repeat(64),
+                    from: result.transaction?.from_address || fromAddr,
+                    to: result.transaction?.to_address || toAddr,
+                    value: result.transaction?.value_eth ?? valueEth,
+                    gas: result.transaction?.gas_used ?? gasUsed,
+                    block: result.transaction?.block_number,
+                    risk: result.risk,
+                    level: levelFromVerdict(result.verdict, result.risk),
+                    verdict: result.verdict,
+                    featuresDefaulted: result.featuresDefaulted,
+                    modelScores: result.modelScores,
+                  })
+                }
+              />
             </div>
           ) : errorMsg ? (
             <Panel delay={0.1} className="flex h-full flex-col items-center justify-center border-risk/40 bg-risk/5 p-6 text-center">
@@ -651,6 +673,9 @@ function Detect() {
           <RecommendationPanel result={result} />
         </div>
       ) : null}
+
+      {/* Printable Forensic PDF Modal */}
+      <ForensicPdfModal data={pdfModalData} onClose={() => setPdfModalData(null)} />
     </ModuleShell>
   );
 }
@@ -766,10 +791,12 @@ function VerdictHero({
   result,
   viewModel,
   onSelectModel,
+  onExportPdf,
 }: {
   result: Result;
   viewModel: string;
   onSelectModel: (id: string) => void;
+  onExportPdf?: () => void;
 }) {
   const active = viewModel === "consensus" ? null : result.modelScores.find((m) => m.model_id === viewModel) ?? null;
   const displayVerdict = active ? active.verdict : result.verdict;
@@ -871,21 +898,36 @@ function VerdictHero({
         </div>
       </div>
 
-      {/* Embedded Action Protocol Tag */}
-      <div className="mt-5 flex items-center justify-between gap-3 rounded-lg border border-border bg-[#0e1832] p-3.5">
-        <div className="flex items-center gap-2.5">
-          {level === "high" ? (
-            <ShieldAlert className="h-4 w-4 text-risk shrink-0" />
-          ) : (
-            <ShieldCheck className="h-4 w-4 text-safe shrink-0" />
-          )}
-          <span className="text-xs font-medium text-foreground">
-            {actionLabel(result.action)}
+      {/* Embedded Action Protocol & PDF Export */}
+      <div className="mt-5 space-y-2.5">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-[#0e1832] p-3.5">
+          <div className="flex items-center gap-2.5">
+            {level === "high" ? (
+              <ShieldAlert className="h-4 w-4 text-risk shrink-0" />
+            ) : (
+              <ShieldCheck className="h-4 w-4 text-safe shrink-0" />
+            )}
+            <span className="text-xs font-medium text-foreground">
+              {actionLabel(result.action)}
+            </span>
+          </div>
+          <span className="truncate font-mono text-[10px] text-muted-foreground">
+            {result.recommendations[0] ? short(result.recommendations[0], 28) : "Standard Operational Protocol"}
           </span>
         </div>
-        <span className="truncate font-mono text-[10px] text-muted-foreground">
-          {result.recommendations[0] ? short(result.recommendations[0], 28) : "Standard Operational Protocol"}
-        </span>
+
+        {onExportPdf && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={onExportPdf}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-[#0e1832] px-4 py-2.5 font-mono text-xs font-medium text-foreground transition hover:border-primary sm:w-auto"
+            >
+              <Printer className="h-3.5 w-3.5 text-cyan" />
+              Download Forensic PDF Dossier
+            </button>
+          </div>
+        )}
       </div>
 
       <div

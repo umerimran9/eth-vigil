@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import {
   Download,
+  Printer,
   SearchCode,
   TrendingUp,
   Sparkles,
@@ -272,13 +273,17 @@ function Analytics() {
     toast.success("Analytics session CSV exported successfully");
   };
 
+  const exportPDF = () => {
+    window.print();
+  };
+
   const verdictDist = useMemo(() => {
     const c: Record<RiskLevel, number> = { safe: 0, elevated: 0, high: 0 };
     rows.forEach((r) => c[r.level]++);
     return [
-      { name: "Legitimate", value: c.safe, color: "#00e5a3" },
-      { name: "Elevated", value: c.elevated, color: "#ffb547" },
-      { name: "High risk", value: c.high, color: "#ff4757" },
+      { name: "Clear", value: c.safe, color: "#00e5a3" },
+      { name: "Medium", value: c.elevated, color: "#ffb547" },
+      { name: "High Risk", value: c.high, color: "#ff4757" },
     ];
   }, [rows]);
 
@@ -386,12 +391,20 @@ function Analytics() {
         aside={
           <div className="flex items-center gap-2">
             <button
+              onClick={exportPDF}
+              disabled={rows.length === 0}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-40"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              Export Analytics PDF
+            </button>
+            <button
               onClick={exportCSV}
               disabled={rows.length === 0}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-[#111c38] px-4 py-2 text-xs font-medium text-foreground transition hover:border-primary disabled:opacity-40"
             >
               <Download className="h-3.5 w-3.5 text-cyan" />
-              Export CSV Report
+              Export CSV
             </button>
           </div>
         }

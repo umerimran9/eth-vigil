@@ -140,7 +140,7 @@ export function RiskBadge({ level, label }: { level: RiskLevel; label?: string }
       )}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-current" />
-      {label ?? (level === "safe" ? "Legitimate" : level === "elevated" ? "Elevated" : "High risk")}
+      {label ?? (level === "safe" ? "Clear" : level === "elevated" ? "Medium" : "High Risk")}
     </span>
   );
 }

@@ -15,9 +15,11 @@ import {
   SearchCode,
   AlertTriangle,
   Filter,
+  Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModuleShell, PageHeader, Panel, RiskBadge, StatTile, short } from "@/components/ui-kit";
+import { ForensicPdfModal, type ForensicReportData } from "@/components/forensic-pdf-modal";
 import { levelFromVerdict, MODELS, type RiskLevel } from "@/lib/platform-data";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -87,6 +89,7 @@ function Batch() {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [pdfModalData, setPdfModalData] = useState<ForensicReportData | null>(null);
 
   const start = async () => {
     if (!fileObject) return;
@@ -595,22 +598,45 @@ function Batch() {
                                       Batch Index #{r.rowIndex}
                                     </span>
                                   </div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setPdfModalData({
+                                          hash: r.hash || `0xrow_${r.rowIndex}`,
+                                          from: r.fromAddress || "0x—",
+                                          to: r.toAddress || "0x—",
+                                          value: typeof r.value === "number" ? r.value : 0.0,
+                                          gas: r.gasUsed || 21000,
+                                          block: null,
+                                          risk: r.risk,
+                                          level: level,
+                                          verdict: r.verdict,
+                                          modelScores: r.modelScores,
+                                        })
+                                      }
+                                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-[#111c38] px-3.5 py-2 font-mono text-xs text-foreground transition hover:border-primary"
+                                    >
+                                      <Printer className="h-3.5 w-3.5 text-cyan" />
+                                      Download Forensic PDF
+                                    </button>
 
-                                  <Link
-                                    to="/detect"
-                                    search={{
-                                      from: r.fromAddress || undefined,
-                                      to: r.toAddress || undefined,
-                                      value: String(r.value || "0"),
-                                      gas: String(r.gasUsed || "21000"),
-                                      hash: r.hash || undefined,
-                                      auto: "true",
-                                    }}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-mono text-xs font-medium text-primary-foreground transition hover:bg-primary/90 shadow-sm"
-                                  >
-                                    <SearchCode className="h-4 w-4" />
-                                    Investigate Row (SHAP Explainability Waterfall) →
-                                  </Link>
+                                    <Link
+                                      to="/detect"
+                                      search={{
+                                        from: r.fromAddress || undefined,
+                                        to: r.toAddress || undefined,
+                                        value: String(r.value || "0"),
+                                        gas: String(r.gasUsed || "21000"),
+                                        hash: r.hash || undefined,
+                                        auto: "true",
+                                      }}
+                                      className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-mono text-xs font-medium text-primary-foreground transition hover:bg-primary/90 shadow-sm"
+                                    >
+                                      <SearchCode className="h-4 w-4" />
+                                      Investigate Row (SHAP Explainability Waterfall) →
+                                    </Link>
+                                  </div>
                                 </div>
                               </motion.div>
                             </td>
@@ -680,10 +706,13 @@ function Batch() {
                   Next <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
-            </div>
-          )}
-        </Panel>
-      </div>
-    </ModuleShell>
-  );
+          </div>
+        )}
+      </Panel>
+    </div>
+
+    {/* Printable Forensic PDF Modal */}
+    <ForensicPdfModal data={pdfModalData} onClose={() => setPdfModalData(null)} />
+  </ModuleShell>
+);
 }
