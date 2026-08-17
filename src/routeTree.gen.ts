@@ -13,9 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as BatchRouteImport } from './routes/batch'
 import { Route as DetectRouteImport } from './routes/detect'
-import { Route as HistoryRouteImport } from './routes/history'
 import { Route as MonitorRouteImport } from './routes/monitor'
-import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ModelsIndexRouteImport } from './routes/models.index'
 import { Route as ModelsModelIdRouteImport } from './routes/models.$modelId'
@@ -40,19 +38,9 @@ const DetectRoute = DetectRouteImport.update({
   path: '/detect',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HistoryRoute = HistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MonitorRoute = MonitorRouteImport.update({
   id: '/monitor',
   path: '/monitor',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportsRoute = ReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -76,9 +64,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
   '/detect': typeof DetectRoute
-  '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
-  '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
@@ -88,9 +74,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
   '/detect': typeof DetectRoute
-  '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
-  '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models': typeof ModelsIndexRoute
@@ -101,9 +85,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/batch': typeof BatchRoute
   '/detect': typeof DetectRoute
-  '/history': typeof HistoryRoute
   '/monitor': typeof MonitorRoute
-  '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
   '/models/$modelId': typeof ModelsModelIdRoute
   '/models/': typeof ModelsIndexRoute
@@ -115,9 +97,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/batch'
     | '/detect'
-    | '/history'
     | '/monitor'
-    | '/reports'
     | '/settings'
     | '/models/$modelId'
     | '/models/'
@@ -127,9 +107,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/batch'
     | '/detect'
-    | '/history'
     | '/monitor'
-    | '/reports'
     | '/settings'
     | '/models/$modelId'
     | '/models'
@@ -139,9 +117,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/batch'
     | '/detect'
-    | '/history'
     | '/monitor'
-    | '/reports'
     | '/settings'
     | '/models/$modelId'
     | '/models/'
@@ -152,9 +128,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   BatchRoute: typeof BatchRoute
   DetectRoute: typeof DetectRoute
-  HistoryRoute: typeof HistoryRoute
   MonitorRoute: typeof MonitorRoute
-  ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
   ModelsModelIdRoute: typeof ModelsModelIdRoute
   ModelsIndexRoute: typeof ModelsIndexRoute
@@ -190,25 +164,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DetectRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/history': {
-      id: '/history'
-      path: '/history'
-      fullPath: '/history'
-      preLoaderRoute: typeof HistoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/monitor': {
       id: '/monitor'
       path: '/monitor'
       fullPath: '/monitor'
       preLoaderRoute: typeof MonitorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reports': {
-      id: '/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -240,9 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   BatchRoute: BatchRoute,
   DetectRoute: DetectRoute,
-  HistoryRoute: HistoryRoute,
   MonitorRoute: MonitorRoute,
-  ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,
   ModelsModelIdRoute: ModelsModelIdRoute,
   ModelsIndexRoute: ModelsIndexRoute,

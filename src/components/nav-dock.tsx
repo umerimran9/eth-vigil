@@ -5,8 +5,6 @@ import {
   BarChart3,
   Brain,
   Command as CommandIcon,
-  FileText,
-  History,
   Layers,
   Radar,
   Settings,
@@ -35,12 +33,6 @@ interface NavGroup {
   items: NavItem[];
 }
 
-// Grouped by user goal, not by technical component: Investigate (one
-// transaction / a batch / the live feed) vs. Intelligence (reference
-// material about the models and aggregate trends) vs. Records (retrospective
-// ledger + export) vs. System (local preferences). "/consensus" and
-// "/explain" were merged into "/detect" as sections of one investigation
-// report, so they no longer have their own nav entries.
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Home",
@@ -59,13 +51,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/models", label: "AI Models", icon: Brain },
       { to: "/analytics", label: "Analytics", icon: BarChart3 },
-    ],
-  },
-  {
-    label: "Records",
-    items: [
-      { to: "/history", label: "History", icon: History },
-      { to: "/reports", label: "Reports", icon: FileText },
     ],
   },
   {
