@@ -1,0 +1,4 @@
+- [x] Add contract security and laundering detection workspaces using the existing Aegis shell.
+- [x] Add navigation entries and route-specific sharing metadata.
+- [ ] Verify both new workflows in the preview and resolve build issues.
+- [ ] Apply the required package security update and commit this request.

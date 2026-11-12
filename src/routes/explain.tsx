@@ -18,6 +18,8 @@ export const Route = createFileRoute("/explain")({
         property: "og:description",
         content: "Understand exactly why a transaction was flagged, feature by feature.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Explain,

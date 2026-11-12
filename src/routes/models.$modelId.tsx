@@ -25,7 +25,17 @@ export const Route = createFileRoute("/models/$modelId")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
-      return { meta: [{ title: "Model unavailable — Aegis" }, { name: "robots", content: "noindex" }] };
+      return {
+        meta: [
+          { title: "Model unavailable — Aegis" },
+          { name: "description", content: "The requested Aegis model workspace could not be found." },
+          { property: "og:title", content: "Model unavailable — Aegis" },
+          { property: "og:description", content: "The requested Aegis model workspace could not be found." },
+          { property: "og:type", content: "website" },
+          { name: "twitter:card", content: "summary_large_image" },
+          { name: "robots", content: "noindex" },
+        ],
+      };
     }
     const { model } = loaderData;
     const description = `${model.name} for Ethereum fraud detection: ${model.tagline} Accuracy ${(model.accuracy * 100).toFixed(1)}%, ROC AUC ${model.rocAuc}.`;
@@ -35,6 +45,8 @@ export const Route = createFileRoute("/models/$modelId")({
         { name: "description", content: description },
         { property: "og:title", content: `${model.name} — Aegis Model Workspace` },
         { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
       ],
     };
   },

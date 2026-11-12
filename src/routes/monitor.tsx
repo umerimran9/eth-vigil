@@ -19,6 +19,8 @@ export const Route = createFileRoute("/monitor")({
         property: "og:description",
         content: "Real-time blocks, transfers and AI risk scoring across the Ethereum mainnet.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Monitor,

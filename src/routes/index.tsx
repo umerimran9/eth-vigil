@@ -21,6 +21,8 @@ export const Route = createFileRoute("/")({
         content:
           "Real-time Ethereum monitoring with a seven-model AI consensus engine, explainable risk scoring and enterprise reporting.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Landing,
@@ -162,7 +164,7 @@ function Landing() {
           viewport={{ once: true }}
           className="max-w-xl text-3xl font-semibold sm:text-4xl"
         >
-          Eleven workspaces. One continuous surface.
+          Twelve workspaces. One continuous surface.
         </motion.h2>
         <p className="mt-4 max-w-lg text-sm text-muted-foreground">
           Switching never reloads a page — the workspace morphs around you. Press{" "}

@@ -18,6 +18,8 @@ export const Route = createFileRoute("/settings")({
         property: "og:description",
         content: "Tune thresholds, feeds and ensemble membership.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Settings,

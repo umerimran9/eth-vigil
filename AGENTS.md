@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep new analysis workspaces in independent route files under `src/routes` and reuse the existing shell/navigation, so each module remains isolated without changing established layouts.

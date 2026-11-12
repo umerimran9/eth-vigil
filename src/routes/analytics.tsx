@@ -33,6 +33,8 @@ export const Route = createFileRoute("/analytics")({
         property: "og:description",
         content: "Interactive analytics on detection volume, risk over time and model utilisation.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Analytics,

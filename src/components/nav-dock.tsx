@@ -6,6 +6,8 @@ import {
   Brain,
   Command as CommandIcon,
   FileText,
+  FileCode2,
+  GitBranch,
   History,
   Layers,
   Radar,
@@ -36,6 +38,8 @@ export const NAV = [
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/history", label: "History", icon: History },
   { to: "/reports", label: "Reports", icon: FileText },
+  { to: "/contracts", label: "Contract Security", icon: FileCode2 },
+  { to: "/laundering", label: "Laundering Detection", icon: GitBranch },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 

@@ -20,6 +20,8 @@ export const Route = createFileRoute("/history")({
         property: "og:description",
         content: "A searchable ledger of every prediction, with one-click re-runs and CSV export.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: History,

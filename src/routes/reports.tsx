@@ -17,6 +17,8 @@ export const Route = createFileRoute("/reports")({
         property: "og:description",
         content: "Audit-ready prediction and batch reports in PDF or CSV.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Reports,

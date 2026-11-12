@@ -18,6 +18,8 @@ export const Route = createFileRoute("/models/")({
         property: "og:description",
         content: "Explore architecture, metrics and inference speed for each model in the ensemble.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Models,

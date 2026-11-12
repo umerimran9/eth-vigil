@@ -19,6 +19,8 @@ export const Route = createFileRoute("/batch")({
         property: "og:description",
         content: "CSV batch scoring for Ethereum transactions with per-row explainable risk output.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Batch,

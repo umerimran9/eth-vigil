@@ -26,6 +26,8 @@ export const Route = createFileRoute("/detect")({
         property: "og:description",
         content: "Paste a transaction hash or enter features and get an explainable fraud verdict.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Detect,

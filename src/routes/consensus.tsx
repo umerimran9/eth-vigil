@@ -19,6 +19,8 @@ export const Route = createFileRoute("/consensus")({
         property: "og:description",
         content: "Seven models vote in real time and converge on a single explainable verdict.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Consensus,
